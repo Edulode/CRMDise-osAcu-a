@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Cambia el título por el de cada sección -->
+  <title>Diseños Acuña - Diseños</title>
+
+  <!-- Tailwind CSS (ajusta la ruta según tu estructura) -->
+  <link href="../src/css/output.css" rel="stylesheet" />
+
+  <!-- layout.js inyecta sidebar + header.
+       data-active debe coincidir con el "page" del enlace:
+       dashboard | pedidos | clientes | disenos | reportes | configuracion | seguridad -->
+  <script src="../src/css/sidebar.js" data-active="disenos" defer></script>
+</head>
+
+<body class="bg-slate-100 text-gray-800">
+
+  <!--
+    Todo lo que pongas aquí dentro quedará automáticamente
+    a la DERECHA del sidebar y DEBAJO del header.
+    Usa <main class="flex-1 p-6 space-y-6"> como contenedor raíz.
+  -->
+  <main class="flex-1 p-6 space-y-6">
+
+    <!-- ═══════════════════════════════════════
+         AQUÍ VA EL CONTENIDO ÚNICO DE LA PÁGINA
+         ═══════════════════════════════════════ -->
+
+    <p class="text-gray-400">diseños acuña</p>
+
+  </main>
+
+</body>
+
+</html>

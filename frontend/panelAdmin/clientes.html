@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diseños Acuña - Clientes</title>
+
+  <link href="../src/css/output.css" rel="stylesheet" />
+  <script src="../src/css/sidebar.js" data-active="clientes" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --color-sidebar: #1a2232;
+      --color-gold: #c9a84c;
+      --color-gold-light: #e8c56a;
+    }
+    body { font-family: 'DM Sans', sans-serif; }
+
+    /* ── KPI cards hover ── */
+    .kpi-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+
+    /* ── Role badges ── */
+    .role-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+    .role-cliente       { background: #e0f2fe; color: #0369a1; }
+    .role-empleado      { background: #f3e8ff; color: #7e22ce; }
+    .role-administrador { background: #fef9c3; color: #a16207; }
+
+    /* ── Estado badges ── */
+    .estado-activo   { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: #dcfce7; color: #15803d; }
+    .estado-inactivo { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: #fee2e2; color: #b91c1c; }
+
+    /* ── Avatar circle ── */
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--color-gold);
+      color: var(--color-sidebar);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+    }
+
+    /* ── Search input ── */
+    .search-input:focus { outline: none; border-color: var(--color-gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+
+    /* ── Dropdown filter ── */
+    #filter-dropdown {
+      display: none; position: absolute; top: calc(100% + 6px); right: 0;
+      z-index: 200; min-width: 180px; background: #fff;
+      border: 1px solid #e2e8f0; border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12); overflow: hidden;
+    }
+    #filter-dropdown.open { display: block; }
+    .filter-option {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; font-size: 0.82rem; color: #374151;
+      cursor: pointer; transition: background 0.12s; font-family: 'DM Sans', sans-serif;
+    }
+    .filter-option:hover { background: #f8fafc; }
+    .filter-option.selected { color: var(--color-gold); font-weight: 600; background: #fffbeb; }
+
+    /* ── Action buttons in table ── */
+    .action-icon-btn {
+      padding: 6px; border-radius: 7px; border: none; background: transparent;
+      cursor: pointer; transition: background 0.15s; color: #9ca3af;
+    }
+    .action-icon-btn.edit:hover  { background: #eff6ff; color: #3b82f6; }
+    .action-icon-btn.trash:hover { background: #fef2f2; color: #ef4444; }
+
+    /* ── Pagination ── */
+    .page-btn {
+      min-width: 34px; height: 34px; padding: 0 10px; border-radius: 8px;
+      border: 1px solid #e2e8f0; background: #fff; font-size: 0.82rem;
+      color: #374151; cursor: pointer; transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--color-gold); color: var(--color-gold); }
+    .page-btn.active { background: var(--color-gold); color: var(--color-sidebar); border-color: var(--color-gold); font-weight: 700; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Modal ── */
+    #modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 1000; align-items: center; justify-content: center; padding: 16px;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal-box {
+      background: #fff; border-radius: 18px; width: 100%; max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden;
+    }
+    .modal-input {
+      width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: 0.875rem; font-family: 'DM Sans', sans-serif; color: #1f2937;
+      transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box;
+    }
+    .modal-input:focus { outline: none; border-color: var(--color-gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+    .modal-select {
+      width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: 0.875rem; font-family: 'DM Sans', sans-serif; color: #1f2937;
+      background: white; cursor: pointer; box-sizing: border-box;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%236b7280' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px;
+      padding-right: 32px;
+    }
+    .modal-select:focus { outline: none; border-color: var(--color-gold); }
+
+    /* ── Table rows ── */
+    #tbody-clientes tr { border-bottom: 1px solid #f1f5f9; }
+    #tbody-clientes tr:last-child { border-bottom: none; }
+
+    /* ══════════════════════════════════
+       TABLA RESPONSIVE → cards en mobile
+    ══════════════════════════════════ */
+    @media (max-width: 767px) {
+      #thead-clientes { display: none; }
+      #tbody-clientes { display: block; padding: 12px; }
+
+      #tbody-clientes tr {
+        display: grid;
+        grid-template-columns: auto 1fr 1fr auto;
+        grid-template-rows: auto auto auto;
+        gap: 6px 10px;
+        background: #fff;
+        border: 1px solid #f1f5f9;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        align-items: center;
+        border-bottom: none !important;
+      }
+
+      #tbody-clientes td { padding: 0; border: none; }
+      #tbody-clientes td.td-avatar  { grid-column: 1; grid-row: 1 / 3; display: flex; align-items: center; }
+      #tbody-clientes td.td-nombre  { grid-column: 2; grid-row: 1; font-weight: 600; font-size: 0.9rem; }
+      #tbody-clientes td.td-email   { grid-column: 2 / 4; grid-row: 2; font-size: 0.78rem; color: #6b7280; }
+      #tbody-clientes td.td-rol     { grid-column: 4; grid-row: 1; display: flex; justify-content: flex-end; }
+      #tbody-clientes td.td-fecha   { grid-column: 1; grid-row: 3; display: flex; flex-direction: column; }
+      #tbody-clientes td.td-pedidos { grid-column: 2; grid-row: 3; display: flex; flex-direction: column; }
+      #tbody-clientes td.td-estado  { grid-column: 3; grid-row: 3; display: flex; flex-direction: column; }
+      #tbody-clientes td.td-acciones{ grid-column: 4; grid-row: 3; display: flex; justify-content: flex-end; align-items: center; }
+
+      #tbody-clientes td[data-label]::before {
+        content: attr(data-label);
+        font-size: 0.65rem; font-weight: 600; color: #9ca3af;
+        text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; display: block;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 text-gray-800">
+
+  <main class="flex-1 p-6 space-y-6">
+
+    <!-- ══ Search + actions bar ══ -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+
+      <!-- Search -->
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input id="search-input" type="text" placeholder="Buscar por nombre o email..."
+          class="search-input w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-slate-50 text-gray-700 placeholder-gray-400" />
+      </div>
+
+      <!-- Filter + New user -->
+      <div class="flex items-center gap-3 shrink-0">
+
+        <!-- Role filter -->
+        <div class="relative" id="filter-wrap">
+          <button onclick="toggleFilter(event)"
+            class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition bg-white">
+            <span id="filter-label">Todos los roles</span>
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div id="filter-dropdown">
+            <div class="filter-option selected" data-value="" onclick="selectFilter(this)">
+              Todos los roles
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            </div>
+            <div class="filter-option" data-value="Cliente" onclick="selectFilter(this)">Cliente</div>
+            <div class="filter-option" data-value="Empleado" onclick="selectFilter(this)">Empleado</div>
+            <div class="filter-option" data-value="Administrador" onclick="selectFilter(this)">Administrador</div>
+          </div>
+        </div>
+
+        <!-- New user button -->
+        <button onclick="abrirModal()"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition"
+          style="background: var(--color-gold); color: #1a2232;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nuevo Usuario
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ KPI Cards ══ -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500 mb-2">Total Usuarios</p>
+        <p class="text-3xl font-bold text-gray-900" id="kpi-total">0</p>
+      </div>
+      <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500 mb-2">Clientes</p>
+        <p class="text-3xl font-bold text-gray-900" id="kpi-clientes">0</p>
+      </div>
+      <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500 mb-2">Empleados</p>
+        <p class="text-3xl font-bold text-gray-900" id="kpi-empleados">0</p>
+      </div>
+      <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500 mb-2">Administradores</p>
+        <p class="text-3xl font-bold text-gray-900" id="kpi-admins">0</p>
+      </div>
+    </div>
+
+    <!-- ══ Table ══ -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead id="thead-clientes">
+            <tr class="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+              <th class="px-6 py-3 text-left font-medium">Usuario</th>
+              <th class="px-6 py-3 text-left font-medium">Email</th>
+              <th class="px-6 py-3 text-left font-medium">Rol</th>
+              <th class="px-6 py-3 text-left font-medium">Fecha de Registro</th>
+              <th class="px-6 py-3 text-center font-medium">Pedidos</th>
+              <th class="px-6 py-3 text-left font-medium">Estado</th>
+              <th class="px-6 py-3 text-center font-medium">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-clientes" class="divide-y divide-slate-50"></tbody>
+        </table>
+      </div>
+
+      <!-- Footer: count + pagination -->
+      <div class="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-gray-100 gap-3">
+        <p class="text-sm text-gray-400" id="pag-info">Mostrando 0 de 0 usuarios</p>
+        <div class="flex items-center gap-2" id="pag-buttons"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══ Modal: Nuevo / Editar usuario ══ -->
+  <div id="modal-overlay" onclick="cerrarModalOverlay(event)">
+    <div id="modal-box">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-900" id="modal-title">Crear Nuevo Usuario</h3>
+        <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-6 py-5 space-y-4">
+        <input type="hidden" id="modal-idx" value="" />
+
+        <!-- Nombre + Apellidos -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <input id="m-nombre" type="text" placeholder="Juan" class="modal-input" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+            <input id="m-apellidos" type="text" placeholder="Pérez" class="modal-input" />
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input id="m-email" type="email" placeholder="juan@ejemplo.com" class="modal-input" />
+        </div>
+
+        <!-- Teléfono (solo en modo crear) -->
+        <div id="field-telefono">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+          <input id="m-telefono" type="tel" placeholder="+52 55 1234 5678" class="modal-input" />
+        </div>
+
+        <!-- Rol -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+          <select id="m-rol" class="modal-select">
+            <option value="Cliente">Cliente</option>
+            <option value="Empleado">Empleado</option>
+            <option value="Administrador">Administrador</option>
+          </select>
+        </div>
+
+        <!-- Contraseña (solo en modo crear) -->
+        <div id="field-password">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+          <input id="m-password" type="password" placeholder="••••••••" class="modal-input" />
+        </div>
+
+        <!-- Estado (solo en modo editar) -->
+        <div id="field-estado" style="display:none;">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+          <select id="m-estado" class="modal-select">
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Footer buttons -->
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100">
+        <button onclick="cerrarModal()"
+          class="px-5 py-2.5 text-sm text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition font-medium">
+          Cancelar
+        </button>
+        <button onclick="guardarUsuario()" id="btn-guardar"
+          class="px-5 py-2.5 text-sm font-semibold rounded-lg transition"
+          style="background: var(--color-gold); color: #1a2232;">
+          Crear Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       DATA SIMULADA (reemplazar con backend)
+       ════════════════════════════════ -->
+  <script>
+
+    /* ── Datos simulados ─────────────────────────── */
+    let usuariosData = [
+      { nombre: 'María',   apellidos: 'González',  email: 'maria@ejemplo.com',   telefono: '', rol: 'Cliente',       fecha: '15 Ene 2026', pedidos: 8,  estado: 'Activo'   },
+      { nombre: 'Carlos',  apellidos: 'Ramírez',   email: 'carlos@ejemplo.com',  telefono: '', rol: 'Empleado',      fecha: '10 Ene 2026', pedidos: 0,  estado: 'Activo'   },
+      { nombre: 'Ana',     apellidos: 'Martínez',  email: 'ana@ejemplo.com',     telefono: '', rol: 'Cliente',       fecha: '8 Feb 2026',  pedidos: 15, estado: 'Activo'   },
+      { nombre: 'Luis',    apellidos: 'Hernández', email: 'luis@ejemplo.com',    telefono: '', rol: 'Administrador', fecha: '1 Ene 2026',  pedidos: 0,  estado: 'Activo'   },
+      { nombre: 'Sofía',   apellidos: 'López',     email: 'sofia@ejemplo.com',   telefono: '', rol: 'Cliente',       fecha: '20 Ene 2026', pedidos: 3,  estado: 'Activo'   },
+      { nombre: 'Diego',   apellidos: 'Torres',    email: 'diego@ejemplo.com',   telefono: '', rol: 'Cliente',       fecha: '5 Feb 2026',  pedidos: 1,  estado: 'Inactivo' },
+      { nombre: 'Laura',   apellidos: 'Sánchez',   email: 'laura@ejemplo.com',   telefono: '', rol: 'Empleado',      fecha: '12 Ene 2026', pedidos: 0,  estado: 'Activo'   },
+      { nombre: 'Roberto', apellidos: 'Díaz',      email: 'roberto@ejemplo.com', telefono: '', rol: 'Cliente',       fecha: '28 Ene 2026', pedidos: 5,  estado: 'Activo'   },
+    ];
+
+    const PER_PAGE = 8;
+    let currentPage = 1;
+    let filtroRol   = '';
+    let filtroBusq  = '';
+
+    /* ── Helpers ─────────────────────────────────── */
+    function initials(nombre, apellidos) {
+      const n = nombre.trim()[0] || '';
+      const a = apellidos.trim()[0] || '';
+      return (n + a).toUpperCase();
+    }
+
+    function nombreCompleto(u) {
+      return (u.nombre + ' ' + u.apellidos).trim();
+    }
+
+    function roleBadge(rol) {
+      const map = { 'Cliente': 'role-cliente', 'Empleado': 'role-empleado', 'Administrador': 'role-administrador' };
+      return `<span class="role-badge ${map[rol] || ''}">${rol}</span>`;
+    }
+
+    function estadoBadge(estado) {
+      return estado === 'Activo'
+        ? `<span class="estado-activo">Activo</span>`
+        : `<span class="estado-inactivo">Inactivo</span>`;
+    }
+
+    /* ── Filtered list ───────────────────────────── */
+    function filteredData() {
+      return usuariosData.filter(u => {
+        const matchRol  = !filtroRol  || u.rol === filtroRol;
+        const nc = nombreCompleto(u).toLowerCase();
+        const matchBusq = !filtroBusq || nc.includes(filtroBusq) || u.email.toLowerCase().includes(filtroBusq);
+        return matchRol && matchBusq;
+      });
+    }
+
+    /* ── Render KPIs ─────────────────────────────── */
+    function renderKPIs() {
+      document.getElementById('kpi-total').textContent     = usuariosData.length;
+      document.getElementById('kpi-clientes').textContent  = usuariosData.filter(u => u.rol === 'Cliente').length;
+      document.getElementById('kpi-empleados').textContent = usuariosData.filter(u => u.rol === 'Empleado').length;
+      document.getElementById('kpi-admins').textContent    = usuariosData.filter(u => u.rol === 'Administrador').length;
+    }
+
+    /* ── Render table ────────────────────────────── */
+    function renderTabla() {
+      const data  = filteredData();
+      const total = data.length;
+      const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+      if (currentPage > pages) currentPage = pages;
+
+      const slice = data.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+
+      const tbody = document.getElementById('tbody-clientes');
+      tbody.innerHTML = '';
+
+      if (slice.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-sm text-gray-400">No se encontraron usuarios.</td></tr>`;
+      } else {
+        slice.forEach((u) => {
+          const realIdx = usuariosData.indexOf(u);
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition-colors';
+          tr.innerHTML = `
+            <td class="td-avatar px-6 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="avatar">${initials(u.nombre, u.apellidos)}</div>
+                <span class="font-medium text-gray-800">${nombreCompleto(u)}</span>
+              </div>
+            </td>
+            <td class="td-email px-6 py-3.5 text-gray-500">${u.email}</td>
+            <td class="td-rol px-6 py-3.5">${roleBadge(u.rol)}</td>
+            <td data-label="Registro" class="td-fecha px-6 py-3.5 text-gray-500 text-xs">${u.fecha}</td>
+            <td data-label="Pedidos"  class="td-pedidos px-6 py-3.5 text-center font-semibold text-gray-800">${u.pedidos}</td>
+            <td data-label="Estado"   class="td-estado px-6 py-3.5">${estadoBadge(u.estado)}</td>
+            <td class="td-acciones px-6 py-3.5">
+              <div class="flex items-center justify-center gap-1">
+                <button class="action-icon-btn edit" onclick="editarUsuario(${realIdx})" title="Editar">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button class="action-icon-btn trash" onclick="eliminarUsuario(${realIdx})" title="Eliminar">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                    <path d="M10 11v6M14 11v6"/>
+                    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* ── Pagination info ── */
+      const end = Math.min(currentPage * PER_PAGE, total);
+      document.getElementById('pag-info').textContent = `Mostrando ${end} de ${total} usuarios`;
+
+      /* ── Pagination buttons ── */
+      const pagDiv = document.getElementById('pag-buttons');
+      pagDiv.innerHTML = '';
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'page-btn';
+      prevBtn.textContent = 'Anterior';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => { currentPage--; renderTabla(); };
+      pagDiv.appendChild(prevBtn);
+
+      for (let p = 1; p <= pages; p++) {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn' + (p === currentPage ? ' active' : '');
+        btn.textContent = p;
+        btn.onclick = () => { currentPage = p; renderTabla(); };
+        pagDiv.appendChild(btn);
+      }
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'page-btn';
+      nextBtn.textContent = 'Siguiente';
+      nextBtn.disabled = currentPage === pages;
+      nextBtn.onclick = () => { currentPage++; renderTabla(); };
+      pagDiv.appendChild(nextBtn);
+    }
+
+    /* ── Search ──────────────────────────────────── */
+    document.getElementById('search-input').addEventListener('input', function () {
+      filtroBusq  = this.value.toLowerCase().trim();
+      currentPage = 1;
+      renderTabla();
+    });
+
+    /* ── Filter dropdown ─────────────────────────── */
+    function toggleFilter(e) {
+      e.stopPropagation();
+      document.getElementById('filter-dropdown').classList.toggle('open');
+    }
+    function selectFilter(el) {
+      filtroRol   = el.dataset.value;
+      currentPage = 1;
+      document.getElementById('filter-label').textContent = el.textContent.trim();
+      document.querySelectorAll('.filter-option').forEach(o => {
+        o.classList.toggle('selected', o === el);
+        const check = o.querySelector('svg');
+        if (check) check.remove();
+        if (o === el) {
+          o.insertAdjacentHTML('beforeend', `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>`);
+        }
+      });
+      document.getElementById('filter-dropdown').classList.remove('open');
+      renderTabla();
+    }
+    document.addEventListener('click', () => {
+      document.getElementById('filter-dropdown').classList.remove('open');
+    });
+
+    /* ── Modal ───────────────────────────────────── */
+    function abrirModal(idx = null) {
+      const esEditar = idx !== null;
+      document.getElementById('modal-idx').value = esEditar ? idx : '';
+      document.getElementById('modal-title').textContent   = esEditar ? 'Editar Usuario' : 'Crear Nuevo Usuario';
+      document.getElementById('btn-guardar').textContent   = esEditar ? 'Guardar Cambios' : 'Crear Usuario';
+
+      // Mostrar/ocultar campos según modo
+      document.getElementById('field-telefono').style.display = esEditar ? 'none' : '';
+      document.getElementById('field-password').style.display  = esEditar ? 'none' : '';
+      document.getElementById('field-estado').style.display    = esEditar ? ''     : 'none';
+
+      if (esEditar) {
+        const u = usuariosData[idx];
+        const partes = u.nombre.split(' ');
+        // Si el nombre ya estaba como nombre completo en versión antigua, lo separamos
+        document.getElementById('m-nombre').value    = u.nombre || '';
+        document.getElementById('m-apellidos').value = u.apellidos || '';
+        document.getElementById('m-email').value     = u.email;
+        document.getElementById('m-rol').value       = u.rol;
+        document.getElementById('m-estado').value    = u.estado;
+      } else {
+        document.getElementById('m-nombre').value    = '';
+        document.getElementById('m-apellidos').value = '';
+        document.getElementById('m-email').value     = '';
+        document.getElementById('m-telefono').value  = '';
+        document.getElementById('m-password').value  = '';
+        document.getElementById('m-rol').value       = 'Cliente';
+      }
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function cerrarModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+    function cerrarModalOverlay(e) { if (e.target === document.getElementById('modal-overlay')) cerrarModal(); }
+
+    function guardarUsuario() {
+      const nombre    = document.getElementById('m-nombre').value.trim();
+      const apellidos = document.getElementById('m-apellidos').value.trim();
+      const email     = document.getElementById('m-email').value.trim();
+      const rol       = document.getElementById('m-rol').value;
+      const idx       = document.getElementById('modal-idx').value;
+      const esEditar  = idx !== '';
+
+      if (!nombre || !email) { alert('Nombre y email son requeridos.'); return; }
+
+      if (esEditar) {
+        const estado = document.getElementById('m-estado').value;
+        usuariosData[parseInt(idx)] = { ...usuariosData[parseInt(idx)], nombre, apellidos, email, rol, estado };
+      } else {
+        const hoy = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+        usuariosData.unshift({ nombre, apellidos, email, telefono: document.getElementById('m-telefono').value.trim(), rol, fecha: hoy, pedidos: 0, estado: 'Activo' });
+      }
+
+      cerrarModal();
+      renderKPIs();
+      renderTabla();
+    }
+
+    /* ── Edit / Delete ───────────────────────────── */
+    function editarUsuario(idx) { abrirModal(idx); }
+
+    function eliminarUsuario(idx) {
+      const u = usuariosData[idx];
+      if (confirm(`¿Eliminar a ${nombreCompleto(u)}?`)) {
+        usuariosData.splice(idx, 1);
+        renderKPIs();
+        renderTabla();
+      }
+    }
+
+    /* ── Init ────────────────────────────────────── */
+    renderKPIs();
+    renderTabla();
+
+  </script>
+
+</body>
+</html>

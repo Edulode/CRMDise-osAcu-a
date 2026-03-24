@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diseños Acuña - Dashboard</title>
+
+  <link href="../src/css/output.css" rel="stylesheet" />
+  <script src="../src/css/sidebar.js" data-active="dashboard" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --color-sidebar: #1a2232;
+      --color-gold: #c9a84c;
+    }
+    body { font-family: 'DM Sans', sans-serif; }
+
+    .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.10); }
+
+    /* ── Badges ── */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+    .badge-pendiente  { background: #fef9c3; color: #a16207; }
+    .badge-produccion { background: #e0f2fe; color: #0369a1; }
+    .badge-enviado    { background: #f3e8ff; color: #7e22ce; }
+    .badge-completado { background: #dcfce7; color: #15803d; }
+
+    .chart-area { position: relative; height: 240px; }
+
+    /* ══════════════════════════════════════
+       DROPDOWN — position:fixed para que
+       nunca quede cortado por overflow
+    ══════════════════════════════════════ */
+    #shared-dropdown {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      min-width: 148px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+      overflow: hidden;
+    }
+    #shared-dropdown.open { display: block; }
+    #shared-dropdown button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      font-family: 'DM Sans', sans-serif;
+      color: #374151;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #shared-dropdown button:hover { background: #f8fafc; }
+    #shared-dropdown button.danger { color: #ef4444; }
+    #shared-dropdown button.danger:hover { background: #fef2f2; }
+
+    /* ══════════════════════════════════════
+       TABLA RESPONSIVE
+       ≥ 640px → tabla normal con scroll
+       < 640px → cada fila = card (grid 2 col)
+    ══════════════════════════════════════ */
+
+    /* Mobile: convertir filas en cards */
+    @media (max-width: 639px) {
+
+      /* Ocultar encabezados */
+      #thead-pedidos { display: none; }
+
+      /* tbody se convierte en bloque */
+      #tabla-pedidos { display: block; padding: 12px; }
+
+      /* Cada <tr> = card */
+      #tabla-pedidos tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 16px;
+        background: #fff;
+        border: 1px solid #f1f5f9;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      }
+
+      /* Cada <td> muestra label arriba y valor abajo */
+      #tabla-pedidos td {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        border: none !important;
+      }
+      #tabla-pedidos td::before {
+        content: attr(data-label);
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 3px;
+      }
+
+      /* Posición de cada celda en el grid */
+      #tabla-pedidos td[data-label="ID"]      { grid-column: 1; grid-row: 1; font-family: monospace; font-size: 0.75rem; color: #9ca3af; }
+      #tabla-pedidos td[data-label="Cliente"] { grid-column: 2; grid-row: 1; font-weight: 600; }
+      #tabla-pedidos td[data-label="Fecha"]   { grid-column: 1; grid-row: 2; color: #6b7280; font-size: 0.82rem; }
+      #tabla-pedidos td[data-label="Estado"]  { grid-column: 2; grid-row: 2; }
+      #tabla-pedidos td[data-label="Total"]   { grid-column: 1; grid-row: 3; font-weight: 700; font-size: 0.95rem; }
+      #tabla-pedidos td[data-label="Acción"]  { grid-column: 2; grid-row: 3; align-items: flex-end; justify-content: flex-end; }
+
+      /* Quitar text-right heredado en mobile */
+      #tabla-pedidos td { text-align: left !important; }
+
+      /* Sin scroll horizontal en mobile */
+      .table-scroll { overflow-x: visible !important; }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 text-gray-800">
+
+  <main class="flex-1 p-6 space-y-6">
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+      <!-- Ventas Hoy -->
+      <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">+12.5%</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-1">Ventas Hoy</p>
+        <p class="text-2xl font-bold text-gray-900">$12,450</p>
+      </div>
+
+      <!-- Pedidos Pendientes -->
+      <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-blue-500 bg-blue-50 px-2 py-1 rounded-full">+3</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-1">Pedidos Pendientes</p>
+        <p class="text-2xl font-bold text-gray-900">24</p>
+      </div>
+
+      <!-- Ingresos Mensuales -->
+      <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">+18.2%</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-1">Ingresos Mensuales</p>
+        <p class="text-2xl font-bold text-gray-900">$89,340</p>
+      </div>
+
+      <!-- Clientes Nuevos -->
+      <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold text-purple-500 bg-purple-50 px-2 py-1 rounded-full">+8</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-1">Clientes Nuevos</p>
+        <p class="text-2xl font-bold text-gray-900">142</p>
+      </div>
+
+    </div>
+
+    <!-- ══ Charts Row ══ -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <!-- Ventas Mensuales -->
+      <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-base font-semibold text-gray-800">Ventas Mensuales</h2>
+          <a href="reportes.html"
+            class="text-sm text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+            Ver reporte
+          </a>
+        </div>
+        <div class="chart-area">
+          <canvas id="chartVentas"></canvas>
+        </div>
+      </div>
+
+      <!-- Productos Más Vendidos -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <h2 class="text-base font-semibold text-gray-800 mb-6">Productos Más Vendidos</h2>
+        <div class="chart-area">
+          <canvas id="chartProductos"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══ Pedidos Recientes ══ -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-base font-semibold text-gray-800">Pedidos Recientes</h2>
+        <a href="pedidos.html"
+          class="text-sm text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+          Ver todos
+        </a>
+      </div>
+
+      <!-- table-scroll: scroll horizontal en desktop, desactivado en mobile via CSS -->
+      <div class="table-scroll overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead id="thead-pedidos">
+            <tr class="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+              <th class="px-6 py-3 text-left font-medium">ID</th>
+              <th class="px-6 py-3 text-left font-medium">Cliente</th>
+              <th class="px-6 py-3 text-left font-medium">Fecha</th>
+              <th class="px-6 py-3 text-left font-medium">Estado</th>
+              <th class="px-6 py-3 text-right font-medium">Total</th>
+              <th class="px-6 py-3 text-center font-medium">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-pedidos" class="divide-y divide-slate-50"></tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ══ Dropdown compartido — anclado al body con position:fixed ══ -->
+  <div id="shared-dropdown">
+    <button id="dd-edit">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+      </svg>
+      Editar
+    </button>
+    <button id="dd-delete" class="danger">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      Eliminar
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════
+       DATA SIMULADA (reemplazar con backend)
+       ════════════════════════════════ -->
+  <script>
+
+    /* ── Datos simulados ─────────────────────────── */
+    const ventasMensuales = {
+      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+      data:   [10000, 18000, 15000, 24000, 22000, 30500],
+    };
+
+    const productosVendidos = {
+      labels: ['Elegancia Clásica', 'Moderno Minimalista', 'Jardín Florido', 'Romance Eterno', 'Simpleza Dorada'],
+      data:   [160, 142, 115, 95, 72],
+    };
+
+    const pedidosData = [
+      { id: 'DA-2026-0217', cliente: 'María González',  fecha: '17 Feb 2026', estado: 'Pendiente',     total: '$1,280' },
+      { id: 'DA-2026-0216', cliente: 'Carlos Ramírez',  fecha: '16 Feb 2026', estado: 'En producción', total: '$2,450' },
+      { id: 'DA-2026-0215', cliente: 'Ana Martínez',    fecha: '15 Feb 2026', estado: 'Enviado',       total: '$890'   },
+      { id: 'DA-2026-0214', cliente: 'Luis Hernández',  fecha: '14 Feb 2026', estado: 'Completado',    total: '$1,650' },
+      { id: 'DA-2026-0213', cliente: 'Sofía López',     fecha: '13 Feb 2026', estado: 'Completado',    total: '$3,200' },
+    ];
+
+    /* ── Charts ──────────────────────────────────── */
+    new Chart(document.getElementById('chartVentas'), {
+      type: 'line',
+      data: {
+        labels: ventasMensuales.labels,
+        datasets: [{
+          data: ventasMensuales.data,
+          borderColor: '#c9a84c',
+          backgroundColor: 'rgba(201,168,76,0.08)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#c9a84c',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          tension: 0.4,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 12, family: 'DM Sans' } } },
+          y: {
+            grid: { color: '#f1f5f9' },
+            ticks: {
+              color: '#9ca3af',
+              font: { size: 11, family: 'DM Sans' },
+              callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
+            }
+          }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('chartProductos'), {
+      type: 'bar',
+      data: {
+        labels: productosVendidos.labels,
+        datasets: [{ data: productosVendidos.data, backgroundColor: '#1a2232', borderRadius: 4, borderSkipped: false }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#f1f5f9' }, ticks: { color: '#9ca3af', font: { size: 11, family: 'DM Sans' } } },
+          y: { grid: { display: false },   ticks: { color: '#374151', font: { size: 11, family: 'DM Sans' } } }
+        }
+      }
+    });
+
+    /* ── Badge helper ────────────────────────────── */
+    function badgeClass(estado) {
+      const map = {
+        'Pendiente':     'badge-pendiente',
+        'En producción': 'badge-produccion',
+        'Enviado':       'badge-enviado',
+        'Completado':    'badge-completado',
+      };
+      return map[estado] || 'bg-gray-100 text-gray-600';
+    }
+
+    /* ── Render tabla ────────────────────────────── */
+    function renderPedidos() {
+      const tbody = document.getElementById('tabla-pedidos');
+      tbody.innerHTML = '';
+      pedidosData.slice(0, 5).forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors';
+        tr.innerHTML = `
+          <td data-label="ID"      class="px-6 py-3.5 font-mono text-xs text-gray-400">${p.id}</td>
+          <td data-label="Cliente" class="px-6 py-3.5 font-medium text-gray-800">${p.cliente}</td>
+          <td data-label="Fecha"   class="px-6 py-3.5 text-gray-500">${p.fecha}</td>
+          <td data-label="Estado"  class="px-6 py-3.5">
+            <span class="badge ${badgeClass(p.estado)}">${p.estado}</span>
+          </td>
+          <td data-label="Total"   class="px-6 py-3.5 text-right font-semibold text-gray-800">${p.total}</td>
+          <td data-label="Acción"  class="px-6 py-3.5 text-center">
+            <button id="btn-${idx}"
+              onclick="abrirDropdown(${idx}, event)"
+              class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-slate-100 transition"
+              title="Acciones">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <circle cx="10" cy="4"  r="1.5"/>
+                <circle cx="10" cy="10" r="1.5"/>
+                <circle cx="10" cy="16" r="1.5"/>
+              </svg>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    renderPedidos();
+
+    /* ── Dropdown con position:fixed ─────────────── */
+    // Un solo elemento reutilizable, posicionado con getBoundingClientRect()
+    const dropdown = document.getElementById('shared-dropdown');
+    let activeIdx  = null;
+
+    function abrirDropdown(idx, e) {
+      e.stopPropagation();
+
+      const btn  = document.getElementById(`btn-${idx}`);
+      const rect = btn.getBoundingClientRect();
+      const MENU_W = 148;
+      const MENU_H = 88; // altura aprox. de las 2 opciones
+
+      // Alternar: si ya estaba abierto para este botón, cierra
+      if (dropdown.classList.contains('open') && activeIdx === idx) {
+        dropdown.classList.remove('open');
+        activeIdx = null;
+        return;
+      }
+
+      activeIdx = idx;
+
+      // Posición horizontal: alineado al borde derecho del botón
+      let left = rect.right - MENU_W;
+      if (left < 8) left = 8;
+
+      // Posición vertical: preferir abajo, si no hay espacio abre arriba
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow >= MENU_H + 8
+        ? rect.bottom + 4
+        : rect.top - MENU_H - 4;
+
+      dropdown.style.top  = top  + 'px';
+      dropdown.style.left = left + 'px';
+
+      // Vincular acciones al registro actual
+      document.getElementById('dd-edit').onclick = ev => {
+        ev.stopPropagation();
+        dropdown.classList.remove('open');
+        editarPedido(pedidosData[idx].id);
+      };
+      document.getElementById('dd-delete').onclick = ev => {
+        ev.stopPropagation();
+        dropdown.classList.remove('open');
+        eliminarPedido(pedidosData[idx].id, idx);
+      };
+
+      dropdown.classList.add('open');
+    }
+
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', () => {
+      dropdown.classList.remove('open');
+      activeIdx = null;
+    });
+
+    /* ── Acciones ────────────────────────────────── */
+    function editarPedido(id) {
+      // TODO: reemplazar con tu modal o redirección
+      alert(`Editar pedido: ${id}`);
+    }
+
+    function eliminarPedido(id, idx) {
+      if (confirm(`¿Eliminar el pedido ${id}?`)) {
+        pedidosData.splice(idx, 1);
+        renderPedidos();
+      }
+    }
+
+  </script>
+
+</body>
+</html>

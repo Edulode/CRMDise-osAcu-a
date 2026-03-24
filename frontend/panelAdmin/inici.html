@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diseños Acuña - PanelAdmin</title>
+    <link href="../src/css/output.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        :root {
+            --color-sidebar: #1a2232;
+            --color-gold: #c9a84c;
+            --color-gold-light: #e8c56a;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .bg-sidebar {
+            background-color: var(--color-sidebar);
+        }
+
+        .text-sidebar {
+            color: var(--color-sidebar);
+        }
+
+        .bg-gold {
+            background-color: var(--color-gold);
+        }
+
+        .text-gold {
+            color: var(--color-gold);
+        }
+
+        .sidebar-link {
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(201, 168, 76, 0.12);
+            color: var(--color-gold-light);
+        }
+
+        .sidebar-link.active {
+            background-color: var(--color-gold);
+            color: var(--color-sidebar);
+            font-weight: 600;
+        }
+
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .10);
+        }
+
+        #overlay {
+            display: none;
+        }
+
+        #overlay.open {
+            display: block;
+        }
+
+        .bar-dark {
+            background-color: var(--color-sidebar);
+        }
+
+        .bar-gold {
+            background-color: var(--color-gold);
+        }
+
+        @media (min-width: 768px) {
+            #sidebar {
+                transform: translateX(0) !important;
+            }
+
+            #overlay {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 text-gray-800">
+    <div id="overlay" class="fixed inset-0 bg-black/40 z-20" onclick="toggleSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar"
+        class="bg-sidebar fixed top-0 left-0 h-full w-64 flex flex-col z-30 -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <div class="px-6 pt-8 pb-6 border-b border-white/10">
+            <p class="text-gold font-display text-xl font-bold leading-tight">Diseños Acuña</p>
+            <p class="text-gray-400 text-xs mt-1 tracking-wide">Panel de Administración</p>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-1">
+            <a href="#" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+                Dashboard
+            </a>
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Pedidos
+            </a>
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                </svg>
+                Clientes
+            </a>
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                Diseños
+            </a>
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                Reportes
+            </a>
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+                </svg>
+                Configuración
+            </a>
+            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Seguridad
+            </a>
+        </nav>
+
+        <div class="px-4 pb-6 border-t border-white/10 pt-4">
+            <a href="#"
+                class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-400 hover:text-red-400">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+                </svg>
+                Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="md:ml-64 min-h-screen flex flex-col">
+
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+            <button class="md:hidden p-2 rounded-lg hover:bg-gray-100" onclick="toggleSidebar()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+            </button>
+            <h1 class="font-display text-2xl font-bold text-gray-900">Dashboard</h1>
+            <div class="flex items-center gap-3">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-medium text-gray-800">Admin User</p>
+                    <p class="text-xs text-gray-400">admin@disenosacuna.com</p>
+                </div>
+                <div
+                    class="bg-gold text-sidebar w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
+                    A</div>
+            </div>
+        </header>
+
+        <main class="flex-1 p-6 space-y-6">
+
+            <!-- Stat Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+                <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <line x1="12" y1="1" x2="12" y2="23" />
+                                <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">+12.5%</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-1">Ventas Hoy</p>
+                    <p class="text-2xl font-bold text-gray-900">$12,450</p>
+                </div>
+
+                <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <path d="M16 10a4 4 0 01-8 0" />
+                            </svg>
+                        </div>
+                        <span class="text-xs font-semibold text-blue-500 bg-blue-50 px-2 py-1 rounded-full">+3</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-1">Pedidos Pendientes</p>
+                    <p class="text-2xl font-bold text-gray-900">24</p>
+                </div>
+
+                <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                                <polyline points="16 7 22 7 22 13" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">+18.2%</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-1">Ingresos Mensuales</p>
+                    <p class="text-2xl font-bold text-gray-900">$89,340</p>
+                </div>
+
+                <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs font-semibold text-purple-500 bg-purple-50 px-2 py-1 rounded-full">+8</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-1">Clientes Nuevos</p>
+                    <p class="text-2xl font-bold text-gray-900">142</p>
+                </div>
+
+            </div>
+
+            <!-- Bottom section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-base font-semibold text-gray-800">Ventas Mensuales</h2>
+                        <button
+                            class="text-sm text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">Ver
+                            reporte</button>
+                    </div>
+                    <div class="h-48 flex items-center justify-center bg-slate-50 rounded-xl">
+                        <p class="text-sm text-gray-400">Gráfica próximamente</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <h2 class="text-base font-semibold text-gray-800 mb-6">Productos Más Vendidos</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Elegancia Clásica</span>
+                                <span class="text-gray-400 text-xs">78%</span>
+                            </div>
+                            <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="bar-dark h-full rounded-full" style="width:78%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Moderno Minimalista</span>
+                                <span class="text-gray-400 text-xs">65%</span>
+                            </div>
+                            <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="bar-dark h-full rounded-full" style="width:65%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Rústico Natural</span>
+                                <span class="text-gray-400 text-xs">52%</span>
+                            </div>
+                            <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="bar-gold h-full rounded-full" style="width:52%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">Boho Chic</span>
+                                <span class="text-gray-400 text-xs">38%</span>
+                            </div>
+                            <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="bar-gold h-full rounded-full" style="width:38%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('open');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.add('open');
+            }
+        }
+
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', function () {
+                document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+
+</body>
+
+</html>
