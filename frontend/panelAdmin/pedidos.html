@@ -4,36 +4,830 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Cambia el título por el de cada sección -->
-  <title>Diseños Acuña - Dashboard</title>
-
-  <!-- Tailwind CSS (ajusta la ruta según tu estructura) -->
+  <title>Pedidos</title>
   <link href="../src/css/output.css" rel="stylesheet" />
-
-  <!-- layout.js inyecta sidebar + header.
-       data-active debe coincidir con el "page" del enlace:
-       dashboard | pedidos | clientes | disenos | reportes | configuracion | seguridad -->
   <script src="../src/css/sidebar.js" data-active="pedidos" defer></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E2C97E;
+      --gold-pale: #F5EDD6;
+      --navy: #1A2236;
+      --navy-mid: #243047;
+      --navy-light: #2E3D57;
+      --bg: #F0F2F5;
+      --card: #FFFFFF;
+      --text: #1A2236;
+      --muted: #7A8499;
+    }
+
+    * {
+      font-family: 'DM Sans', sans-serif;
+      box-sizing: border-box;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* ── KPI Grid ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 480px) {
+      .kpi-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .kpi-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid #E8EAEF;
+      padding: 16px 20px;
+    }
+
+    /* ── Tabs + Botón ── */
+    .tabs-row {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .tabs-row {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+    }
+
+    .tabs-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-nuevo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--gold);
+      color: var(--navy);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-nuevo:hover { opacity: 0.9; }
+    .btn-nuevo:active { transform: scale(0.97); }
+
+    /* ── Tab pills ── */
+    .tab-pill {
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+    }
+
+    .tab-pill.active {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .tab-pill:not(.active) {
+      background: #fff;
+      color: var(--muted);
+      border: 1px solid #E0E4EC;
+    }
+
+    .tab-pill:not(.active):hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ── Filters ── */
+    .filters-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .filters-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+    @media (min-width: 640px) {
+      .search-wrap {
+        min-width: 200px;
+        max-width: 320px;
+      }
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 9px 14px 9px 34px;
+      font-size: 14px;
+      border-radius: 12px;
+      border: 1px solid #E0E4EC;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .filter-select {
+      padding: 9px 14px;
+      font-size: 14px;
+      border-radius: 12px;
+      border: 1px solid #E0E4EC;
+      color: var(--text);
+      background: #fff;
+      min-width: 0;
+      flex: 1;
+    }
+
+    @media (min-width: 640px) {
+      .filter-select {
+        flex: 0 1 auto;
+        min-width: 150px;
+      }
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--gold);
+      outline-offset: -1px;
+    }
+
+    /* ── Table Card ── */
+    .table-card {
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid #E8EAEF;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #F0F2F5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Scrollable table wrapper */
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      min-width: 700px;
+      font-size: 13px;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      border-bottom: 1px solid #F0F2F5;
+    }
+
+    th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #F0F2F5;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    tbody tr:hover { background: #F7F9FC; }
+    tbody tr:last-child { border-bottom: none; }
+
+    td {
+      padding: 12px 14px;
+      vertical-align: middle;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .badge-pendiente   { background: #FFF4CC; color: #A07700; }
+    .badge-produccion  { background: #DCEEFF; color: #1565C0; }
+    .badge-enviado     { background: #EDE7FF; color: #5E35B1; }
+    .badge-completado  { background: #D6F5E3; color: #1B7A3E; }
+    .badge-cancelado   { background: #FFE5E5; color: #C62828; }
+
+    /* ── Empty state ── */
+    #empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    #empty-state.show { display: flex; }
+
+    /* ── Modal overlay ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 22, 40, 0.55);
+      z-index: 50;
+      backdrop-filter: blur(2px);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #modal-overlay.open { display: flex; }
+
+    .modal-box {
+      position: relative;
+      background: #fff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 620px;
+      padding: 32px 24px;
+      overflow-y: auto;
+      max-height: 92vh;
+    }
+
+    @media (min-width: 640px) {
+      .modal-box { padding: 40px; }
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 480px) {
+      .modal-grid {
+        grid-template-columns: 1fr 1fr;
+        column-gap: 20px;
+        row-gap: 14px;
+      }
+    }
+
+    .col-span-2 { grid-column: 1 / -1; }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid #E0E4EC;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    textarea.form-input { resize: none; }
+
+    /* ── Detail Drawer ── */
+    #detail-drawer {
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      z-index: 60;
+      box-shadow: -8px 0 32px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #detail-drawer.open { transform: translateX(0); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD0DC; border-radius: 4px; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 16px;
+      left: 16px;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    @media (min-width: 480px) {
+      #toast {
+        left: auto;
+        min-width: 240px;
+        max-width: 360px;
+      }
+    }
+
+    #toast.show { display: flex; }
+
+    .gold-divider {
+      height: 3px;
+      width: 40px;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up { animation: fadeUp 0.3s ease forwards; }
+  </style>
 </head>
 
 <body class="bg-slate-100 text-gray-800">
 
-  <!--
-    Todo lo que pongas aquí dentro quedará automáticamente
-    a la DERECHA del sidebar y DEBAJO del header.
-    Usa <main class="flex-1 p-6 space-y-6"> como contenedor raíz.
-  -->
-  <main class="flex-1 p-6 space-y-6">
+   <main class="flex-1 p-6 space-y-6">
 
-    <!-- ═══════════════════════════════════════
-         AQUÍ VA EL CONTENIDO ÚNICO DE LA PÁGINA
-         ═══════════════════════════════════════ -->
+    <!-- ── KPI Cards ── -->
+    <div class="kpi-grid fade-up">
+      <div class="stat-card">
+        <p style="font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px;">Total Pedidos</p>
+        <p style="font-size:28px;font-weight:700;color:var(--navy);font-family:'Playfair Display',serif;line-height:1.1;">48</p>
+        <p style="font-size:11px;margin-top:4px;color:var(--gold);">↑ 12% este mes</p>
+      </div>
+      <div class="stat-card">
+        <p style="font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px;">Pendientes</p>
+        <p style="font-size:28px;font-weight:700;color:#A07700;font-family:'Playfair Display',serif;line-height:1.1;">7</p>
+        <p style="font-size:11px;margin-top:4px;color:var(--muted);">Por atender</p>
+      </div>
+      <div class="stat-card">
+        <p style="font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px;">En Producción</p>
+        <p style="font-size:28px;font-weight:700;color:#1565C0;font-family:'Playfair Display',serif;line-height:1.1;">11</p>
+        <p style="font-size:11px;margin-top:4px;color:var(--muted);">En proceso</p>
+      </div>
+      <div class="stat-card">
+        <p style="font-size:11px;font-weight:500;color:var(--muted);margin-bottom:4px;">Ingresos del Mes</p>
+        <p style="font-size:28px;font-weight:700;color:#1B7A3E;font-family:'Playfair Display',serif;line-height:1.1;">$38,420</p>
+        <p style="font-size:11px;margin-top:4px;color:var(--gold);">↑ 8% vs mes anterior</p>
+      </div>
+    </div>
 
-    <p class="text-gray-400">pedidos</p>
+    <!-- ── Tabs + Botón ── -->
+    <div class="tabs-row">
+      <div class="tabs-group">
+        <button onclick="switchTab('web')" id="tab-web" class="tab-pill active">
+          <i class="fa-solid fa-globe" style="font-size:11px;"></i> Pedidos Web
+          <span id="count-web" style="font-size:11px;background:#fff;color:var(--navy);border-radius:999px;padding:1px 8px;font-weight:700;">8</span>
+        </button>
+        <button onclick="switchTab('presencial')" id="tab-presencial" class="tab-pill">
+          <i class="fa-solid fa-store" style="font-size:11px;"></i> Presenciales
+          <span id="count-presencial" style="font-size:11px;background:#E8EAEF;color:var(--muted);border-radius:999px;padding:1px 8px;font-weight:700;">4</span>
+        </button>
+      </div>
+      <button onclick="openNewModal()" class="btn-nuevo">
+        <i class="fa-solid fa-plus"></i> Nuevo Pedido
+      </button>
+    </div>
 
+    <!-- ── Filters ── -->
+    <div class="filters-row">
+      <div class="search-wrap">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input id="search-input" oninput="filterTable()" type="text"
+          placeholder="Buscar cliente, ID o diseño…"
+          class="search-input" />
+      </div>
+      <select id="filter-estado" onchange="filterTable()" class="filter-select">
+        <option value="">Todos los estados</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="En producción">En producción</option>
+        <option value="Enviado">Enviado</option>
+        <option value="Completado">Completado</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
+      <select id="filter-tipo" onchange="filterTable()" class="filter-select">
+        <option value="">Todos los eventos</option>
+        <option value="Boda">Boda</option>
+        <option value="Bautizo">Bautizo</option>
+        <option value="Cumpleaños">Cumpleaños</option>
+        <option value="XV Años">XV Años</option>
+      </select>
+    </div>
+
+    <!-- ── Table Card ── -->
+    <div class="table-card fade-up">
+      <div class="table-header">
+        <p style="font-size:13px;font-weight:600;color:var(--navy);" id="table-title">Pedidos Web</p>
+        <p style="font-size:12px;color:var(--muted);" id="table-count">Mostrando 29 pedidos</p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Evento</th>
+              <th>Diseño</th>
+              <th>Cant.</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+        <div id="empty-state">
+          <div style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gold-pale);margin-bottom:12px;">
+            <i class="fa-solid fa-box-open" style="font-size:22px;color:var(--gold);"></i>
+          </div>
+          <p style="font-weight:600;color:var(--navy);margin-bottom:4px;">Sin pedidos</p>
+          <p style="font-size:13px;color:var(--muted);">No hay pedidos que coincidan.</p>
+        </div>
+      </div>
+    </div>
   </main>
 
-</body>
+  <!-- ═══ MODAL NUEVO PEDIDO ═══ -->
+  <div id="modal-overlay">
+    <div class="modal-box">
+      <button onclick="closeModal()"
+        style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;background:transparent;cursor:pointer;color:var(--muted);">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <h2 style="font-size:18px;color:var(--navy);margin-bottom:4px;">Nuevo Pedido Presencial</h2>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:20px;">Registra un pedido solicitado de forma presencial</p>
 
+      <div class="modal-grid">
+        <div class="col-span-2">
+          <label class="form-label">Nombre del cliente *</label>
+          <input id="m-cliente" type="text" placeholder="Ej. María González" class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Tipo de evento *</label>
+          <select id="m-evento" class="form-input">
+            <option value="">Seleccionar…</option>
+            <option>Boda</option>
+            <option>Bautizo</option>
+            <option>Cumpleaños</option>
+            <option>XV Años</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Diseño / Tarjeta *</label>
+          <input id="m-tarjeta" type="text" placeholder="Ej. Elegance Floral" class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Cantidad de invitaciones</label>
+          <input id="m-cantidad" type="number" min="1" placeholder="100" class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Color principal</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="m-color-picker" type="color" value="#C9A84C"
+              style="width:42px;height:42px;border-radius:10px;border:1px solid #E0E4EC;padding:3px;cursor:pointer;" />
+            <input id="m-color-text" type="text" value="#C9A84C" placeholder="#C9A84C"
+              class="form-input" style="flex:1;" />
+          </div>
+        </div>
+        <div class="col-span-2">
+          <label class="form-label">Texto personalizable</label>
+          <textarea id="m-texto" rows="2" placeholder="Ej. 'Juntos para siempre – Carlos & Ana'" class="form-input"></textarea>
+        </div>
+        <div>
+          <label class="form-label">Total a pagar ($)</label>
+          <input id="m-total" type="number" min="0" step="0.01" placeholder="1500.00" class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Estado inicial</label>
+          <select id="m-estado" class="form-input">
+            <option>Pendiente</option>
+            <option>En producción</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="modal-error" style="display:none;margin-top:12px;font-size:12px;border-radius:10px;padding:10px 14px;background:#FFE5E5;color:#C62828;">
+        Por favor completa los campos obligatorios.
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button onclick="closeModal()"
+          style="flex:1;padding:10px;border-radius:12px;border:1px solid #E0E4EC;font-size:13px;font-weight:500;color:var(--muted);background:#fff;cursor:pointer;">
+          Cancelar
+        </button>
+        <button onclick="saveNewOrder()"
+          style="flex:1;padding:10px;border-radius:12px;font-size:13px;font-weight:600;background:var(--gold);color:var(--navy);border:none;cursor:pointer;">
+          <i class="fa-solid fa-check" style="margin-right:4px;"></i> Guardar Pedido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DETAIL DRAWER ═══ -->
+  <div id="detail-drawer">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #F0F2F5;">
+      <h2 style="font-size:15px;color:var(--navy);margin:0;" id="drawer-id">Pedido #DA-2026-0217</h2>
+      <button onclick="closeDrawer()"
+        style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;background:transparent;cursor:pointer;color:var(--muted);">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:16px 20px;" id="drawer-content"></div>
+    <div style="padding:16px 20px;border-top:1px solid #F0F2F5;">
+      <p style="font-size:11px;font-weight:500;color:var(--muted);margin-bottom:8px;">Cambiar estado</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;" id="status-buttons"></div>
+    </div>
+  </div>
+  <div id="drawer-overlay" onclick="closeDrawer()"
+    style="display:none;position:fixed;inset:0;z-index:55;background:rgba(15,22,40,0.3);"></div>
+
+  <!-- ═══ TOAST ═══ -->
+  <div id="toast">
+    <i class="fa-solid fa-check-circle" style="color:var(--gold);font-size:16px;flex-shrink:0;"></i>
+    <span id="toast-msg">Acción realizada</span>
+  </div>
+
+  <!-- ═══ JS ═══ -->
+  <script>
+    let orders = [
+      { id: 'DA-2026-0217', cliente: 'María González', evento: 'Boda', tarjeta: 'Elegance Floral', cantidad: 150, color: '#D4AACF', texto: 'María & Juan – 15 Jun 2026', fecha: '17 Feb 2026', estado: 'Pendiente', total: 1280, tipo: 'web' },
+      { id: 'DA-2026-0216', cliente: 'Carlos Ramírez', evento: 'Bautizo', tarjeta: 'Angelitos Dorados', cantidad: 80, color: '#AEE6F3', texto: 'Bienvenido Santiago', fecha: '16 Feb 2026', estado: 'En producción', total: 2450, tipo: 'web' },
+      { id: 'DA-2026-0215', cliente: 'Ana Martínez', evento: 'Cumpleaños', tarjeta: 'Confetti Party', cantidad: 60, color: '#FFD966', texto: '¡Ana cumple 30!', fecha: '15 Feb 2026', estado: 'Enviado', total: 890, tipo: 'web' },
+      { id: 'DA-2026-0214', cliente: 'Luis Hernández', evento: 'XV Años', tarjeta: 'Rosa Vintage', cantidad: 200, color: '#F4A7B9', texto: 'Los XV de Valeria', fecha: '14 Feb 2026', estado: 'Completado', total: 1650, tipo: 'web' },
+      { id: 'DA-2026-0213', cliente: 'Sofía López', evento: 'Boda', tarjeta: 'Rustic Greenery', cantidad: 120, color: '#A8D5A2', texto: 'Sofía & Pedro – Forever', fecha: '13 Feb 2026', estado: 'Completado', total: 3200, tipo: 'web' },
+      { id: 'DA-2026-0212', cliente: 'Jorge Mendoza', evento: 'Bautizo', tarjeta: 'Nubes & Estrellas', cantidad: 90, color: '#B3D4FF', texto: 'Bienvenido Mateo', fecha: '12 Feb 2026', estado: 'Cancelado', total: 750, tipo: 'web' },
+      { id: 'DA-2026-0211', cliente: 'Patricia Ruiz', evento: 'Boda', tarjeta: 'Gold Luxe', cantidad: 250, color: '#C9A84C', texto: 'Patricia & Rodrigo', fecha: '11 Feb 2026', estado: 'En producción', total: 4100, tipo: 'web' },
+      { id: 'DA-2026-0210', cliente: 'Daniela Castro', evento: 'Cumpleaños', tarjeta: 'Tropical Vibes', cantidad: 50, color: '#FF9966', texto: 'Happy Birthday Dani!', fecha: '10 Feb 2026', estado: 'Completado', total: 620, tipo: 'web' },
+      { id: 'DA-P-2026-001', cliente: 'Roberto Flores', evento: 'Boda', tarjeta: 'Clásica Marfil', cantidad: 180, color: '#F5EDD6', texto: 'Roberto & Camila', fecha: '16 Feb 2026', estado: 'Pendiente', total: 2100, tipo: 'presencial' },
+      { id: 'DA-P-2026-002', cliente: 'Elena Torres', evento: 'XV Años', tarjeta: 'Princesa Lila', cantidad: 100, color: '#CBA6F7', texto: 'Los XV de Elena', fecha: '15 Feb 2026', estado: 'En producción', total: 1350, tipo: 'presencial' },
+      { id: 'DA-P-2026-003', cliente: 'Marco Guzmán', evento: 'Bautizo', tarjeta: 'Ángel Blanco', cantidad: 70, color: '#E8F4F8', texto: 'Bienvenida Isabella', fecha: '14 Feb 2026', estado: 'Completado', total: 900, tipo: 'presencial' },
+      { id: 'DA-P-2026-004', cliente: 'Lucía Vargas', evento: 'Cumpleaños', tarjeta: 'Globos & Colores', cantidad: 40, color: '#FF6B9D', texto: 'Lucía cumple 25!', fecha: '13 Feb 2026', estado: 'Enviado', total: 480, tipo: 'presencial' },
+    ];
+
+    const ESTADOS = ['Pendiente', 'En producción', 'Enviado', 'Completado', 'Cancelado'];
+    const BADGE_CLASS = { 'Pendiente': 'badge-pendiente', 'En producción': 'badge-produccion', 'Enviado': 'badge-enviado', 'Completado': 'badge-completado', 'Cancelado': 'badge-cancelado' };
+    const ESTADO_ICON = { 'Pendiente': 'fa-clock', 'En producción': 'fa-gear', 'Enviado': 'fa-truck', 'Completado': 'fa-check', 'Cancelado': 'fa-xmark' };
+
+    let currentTab = 'web';
+    let activeOrderId = null;
+
+    function renderTable() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const estado = document.getElementById('filter-estado').value;
+      const tipoEvt = document.getElementById('filter-tipo').value;
+
+      const filtered = orders.filter(o =>
+        o.tipo === currentTab &&
+        (!search || o.cliente.toLowerCase().includes(search) || o.id.toLowerCase().includes(search) || o.tarjeta.toLowerCase().includes(search)) &&
+        (!estado || o.estado === estado) &&
+        (!tipoEvt || o.evento === tipoEvt)
+      );
+
+      const tbody = document.getElementById('orders-tbody');
+      const empty = document.getElementById('empty-state');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.add('show');
+      } else {
+        empty.classList.remove('show');
+        tbody.innerHTML = filtered.map(o => `
+          <tr onclick="openDrawer('${o.id}')">
+            <td style="font-family:monospace;font-size:11px;color:var(--muted);white-space:nowrap;">${o.id}</td>
+            <td style="font-weight:500;color:var(--navy);white-space:nowrap;">${o.cliente}</td>
+            <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${o.evento}</td>
+            <td style="font-size:12px;color:var(--text);">
+              <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                <span style="width:10px;height:10px;border-radius:50%;background:${o.color};border:1px solid rgba(0,0,0,0.1);flex-shrink:0;"></span>
+                ${o.tarjeta}
+              </div>
+            </td>
+            <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${o.cantidad} inv.</td>
+            <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${o.fecha}</td>
+            <td>
+              <span class="badge ${BADGE_CLASS[o.estado]}">
+                <i class="fa-solid ${ESTADO_ICON[o.estado]}" style="font-size:9px;"></i> ${o.estado}
+              </span>
+            </td>
+            <td style="font-weight:600;color:var(--navy);white-space:nowrap;">$${o.total.toLocaleString()}</td>
+            <td>
+              <button onclick="event.stopPropagation();openDrawer('${o.id}')"
+                style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;cursor:pointer;color:var(--muted);">
+                <i class="fa-solid fa-ellipsis-vertical" style="font-size:12px;"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('table-count').textContent = `Mostrando ${filtered.length} pedido${filtered.length !== 1 ? 's' : ''}`;
+    }
+
+    function filterTable() { renderTable(); }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      ['web', 'presencial'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+      });
+      document.getElementById('table-title').textContent = tab === 'web' ? 'Pedidos Web' : 'Pedidos Presenciales';
+      renderTable();
+    }
+
+    function openDrawer(id) {
+      activeOrderId = id;
+      const o = orders.find(x => x.id === id);
+      document.getElementById('drawer-id').textContent = o.id;
+
+      document.getElementById('drawer-content').innerHTML = `
+        <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="badge ${BADGE_CLASS[o.estado]}"><i class="fa-solid ${ESTADO_ICON[o.estado]}" style="font-size:9px;"></i> ${o.estado}</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:auto;">${o.tipo === 'web' ? '🌐 Web' : '🏪 Presencial'}</span>
+          </div>
+        </div>
+        <div>
+          ${row('fa-user','Cliente',o.cliente)}
+          ${row('fa-calendar-days','Fecha pedido',o.fecha)}
+          ${row('fa-star','Tipo de evento',o.evento)}
+          ${row('fa-id-card','Diseño / Tarjeta',o.tarjeta)}
+          ${row('fa-layer-group','Cantidad',o.cantidad+' invitaciones')}
+          ${row('fa-palette','Color',`<span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:${o.color};border:1px solid rgba(0,0,0,0.12);"></span>${o.color}</span>`)}
+          ${row('fa-pen-nib','Texto',o.texto?`"${o.texto}"` : '—')}
+          ${row('fa-dollar-sign','Total','<span style="font-weight:700;font-size:15px;color:var(--navy);">$'+o.total.toLocaleString()+'</span>')}
+        </div>
+      `;
+
+      document.getElementById('status-buttons').innerHTML = ESTADOS.map(e => `
+        <button onclick="changeStatus('${o.id}','${e}')"
+          style="padding:5px 12px;border-radius:999px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid ${o.estado===e?'var(--gold)':'#E0E4EC'};background:${o.estado===e?'var(--gold-pale)':'#fff'};color:${o.estado===e?'var(--navy)':'var(--muted)'};${o.estado===e?'outline:2px solid var(--gold);outline-offset:-1px;':''}"
+          >
+          <i class="fa-solid ${ESTADO_ICON[e]}" style="font-size:9px;margin-right:3px;"></i>${e}
+        </button>
+      `).join('');
+
+      document.getElementById('detail-drawer').classList.add('open');
+      document.getElementById('drawer-overlay').style.display = 'block';
+    }
+
+    function row(icon, label, val) {
+      return `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:9px 0;border-bottom:1px solid #F0F2F5;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-shrink:0;">
+          <i class="fa-solid ${icon}" style="width:14px;text-align:center;color:var(--gold);font-size:11px;"></i> ${label}
+        </div>
+        <div style="font-size:12px;font-weight:500;color:var(--navy);text-align:right;max-width:55%;word-break:break-word;">${val}</div>
+      </div>`;
+    }
+
+    function closeDrawer() {
+      document.getElementById('detail-drawer').classList.remove('open');
+      document.getElementById('drawer-overlay').style.display = 'none';
+      activeOrderId = null;
+    }
+
+    function changeStatus(id, newStatus) {
+      const o = orders.find(x => x.id === id);
+      if (!o) return;
+      o.estado = newStatus;
+      openDrawer(id);
+      renderTable();
+      showToast(`Estado actualizado a "${newStatus}"`);
+    }
+
+    function openNewModal() {
+      document.getElementById('modal-overlay').classList.add('open');
+      document.getElementById('modal-error').style.display = 'none';
+      ['m-cliente','m-tarjeta','m-texto','m-total'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('m-evento').value = '';
+      document.getElementById('m-cantidad').value = '';
+      document.getElementById('m-estado').value = 'Pendiente';
+    }
+
+    function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+    function saveNewOrder() {
+      const cliente = document.getElementById('m-cliente').value.trim();
+      const evento  = document.getElementById('m-evento').value;
+      const tarjeta = document.getElementById('m-tarjeta').value.trim();
+      const cantidad = parseInt(document.getElementById('m-cantidad').value) || 0;
+      const color   = document.getElementById('m-color-text').value || '#C9A84C';
+      const texto   = document.getElementById('m-texto').value.trim();
+      const total   = parseFloat(document.getElementById('m-total').value) || 0;
+      const estado  = document.getElementById('m-estado').value;
+
+      if (!cliente || !evento || !tarjeta) {
+        document.getElementById('modal-error').style.display = 'block';
+        return;
+      }
+
+      const now = new Date();
+      const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      const fecha = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+      const presCount = orders.filter(o => o.tipo === 'presencial').length + 1;
+      const newId = `DA-P-${now.getFullYear()}-${String(presCount).padStart(3,'0')}`;
+
+      orders.unshift({ id: newId, cliente, evento, tarjeta, cantidad, color, texto, fecha, estado, total, tipo: 'presencial' });
+      closeModal();
+      if (currentTab !== 'presencial') switchTab('presencial');
+      renderTable();
+      showToast(`Pedido ${newId} creado exitosamente`);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('m-color-picker').addEventListener('input', function () {
+        document.getElementById('m-color-text').value = this.value;
+      });
+      document.getElementById('m-color-text').addEventListener('input', function () {
+        if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) document.getElementById('m-color-picker').value = this.value;
+      });
+      renderTable();
+    });
+  </script>
+</body>
 </html>

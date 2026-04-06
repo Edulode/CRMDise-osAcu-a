@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto | Diseños Acuña</title>
+    <script src="../src/css/navbar.js" defer></script>
+    <link href="../src/css/output.css" rel="stylesheet">
+    <script src="../src/css/footer.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Lora:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold:       #B8962E;
+            --gold-light: #C9A84C;
+            --gold-pale:  rgba(184,150,46,0.08);
+            --dark:       #1a1a2e;
+            --text-muted: #6b7280;
+            --bg:         #f5f4f0;
+            --white:      #ffffff;
+            --border:     #e4e1d8;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+        }
+
+        /* ══ HERO ══ */
+        .contact-hero {
+            background: var(--dark);
+            padding: 5rem 2rem 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 20% 50%, rgba(184,150,46,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 60% at 80% 50%, rgba(184,150,46,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-eyebrow {
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .contact-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.12;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .contact-hero h1 em {
+            font-style: italic;
+            color: var(--gold-light);
+        }
+
+        .contact-hero p {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.6);
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.7;
+            position: relative;
+        }
+
+        /* ══ MAIN LAYOUT ══ */
+        .contact-body {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 3.5rem 1.5rem 5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 720px) {
+            .contact-body {
+                grid-template-columns: 1fr;
+                padding: 2.5rem 1.2rem 4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .contact-hero {
+                padding: 3.5rem 1.2rem 3rem;
+            }
+        }
+
+        /* ══ COLUMNAS ══ */
+        .cards-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* ══ CARDS ══ */
+        .info-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem 1.6rem;
+        }
+
+        .info-card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        /* ══ INFO ITEMS ══ */
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            margin-bottom: 1rem;
+        }
+        .info-item:last-child { margin-bottom: 0; }
+
+        .info-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: var(--gold-pale);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .info-icon svg { width: 18px; height: 18px; color: var(--gold); }
+
+        .info-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 0.15rem;
+        }
+
+        .info-value {
+            font-size: 0.92rem;
+            color: var(--dark);
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .info-value a {
+            color: var(--dark);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .info-value a:hover { color: var(--gold); }
+
+        /* ══ HORARIO ══ */
+        .schedule-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            padding: 0.45rem 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .schedule-row:last-child { border-bottom: none; }
+        .schedule-row span:last-child { color: var(--dark); font-weight: 500; }
+        .schedule-row.today span:first-child { color: var(--gold); font-weight: 600; }
+        .schedule-row.today span:last-child  { color: var(--gold); }
+
+        /* ══ REDES ══ */
+        .social-row {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.5rem 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            background: var(--white);
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+        }
+        .social-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .social-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: var(--gold-pale);
+        }
+
+        /* ══ FAQ ══ */
+        .faq-item {
+            border-bottom: 1px solid var(--border);
+        }
+        .faq-item:last-child { border-bottom: none; }
+
+        .faq-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 0.9rem 0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark);
+            cursor: pointer;
+            text-align: left;
+            gap: 0.5rem;
+        }
+
+        .faq-arrow {
+            width: 20px;
+            height: 20px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: transform 0.25s;
+        }
+        .faq-btn[aria-expanded="true"] .faq-arrow { transform: rotate(180deg); }
+
+        .faq-body {
+            display: none;
+            font-size: 0.87rem;
+            color: var(--text-muted);
+            line-height: 1.65;
+            padding-bottom: 0.9rem;
+        }
+        .faq-body.open { display: block; }
+    </style>
+</head>
+<body>
+
+<!-- ══ HERO ══ -->
+<section class="contact-hero">
+    <p class="hero-eyebrow">Estamos para ti</p>
+    <h1>Cuéntanos sobre tu <em>evento especial</em></h1>
+    <p>Responderemos en menos de 24 horas y te ayudaremos a crear las invitaciones perfectas.</p>
+</section>
+
+<!-- ══ BODY ══ -->
+<div class="contact-body">
+
+    <!-- COLUMNA IZQUIERDA -->
+    <div class="cards-col">
+
+        <!-- Info de contacto -->
+        <div class="info-card">
+            <p class="info-card-title">Información de contacto</p>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="info-label">Email</p>
+                    <p class="info-value"><a href="mailto:hola@disenosacuna.com">hola@disenosacuna.com</a></p>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.03 1.22 2 2 0 012 .03h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="info-label">WhatsApp</p>
+                    <p class="info-value"><a href="https://wa.me/5215512345678" target="_blank">+52 55 1234 5678</a></p>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="info-label">Ubicación</p>
+                    <p class="info-value">Toluca, Estado de México<br>Envíos a toda la república</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Redes sociales -->
+        <div class="info-card">
+            <p class="info-card-title">Síguenos</p>
+            <div class="social-row">
+                <a href="#" class="social-btn" target="_blank">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                    </svg>
+                    Instagram
+                </a>
+                <a href="#" class="social-btn" target="_blank">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    Facebook
+                </a>
+                <a href="#" class="social-btn" target="_blank">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                    </svg>
+                    WhatsApp
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA -->
+    <div class="cards-col">
+
+        <!-- Horario -->
+        <div class="info-card">
+            <p class="info-card-title">Horario de atención</p>
+            <div id="schedule-container"></div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="info-card">
+            <p class="info-card-title">Preguntas frecuentes</p>
+            <div id="faq-container"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+/* ════════════════════════════════════════
+   HORARIO — marca el día de hoy
+════════════════════════════════════════ */
+const schedule = [
+    { day: 'Lunes – Viernes', hours: '9:00 – 18:00' },
+    { day: 'Sábado',          hours: '10:00 – 14:00' },
+    { day: 'Domingo',         hours: 'Cerrado' },
+];
+
+const todayIdx = new Date().getDay(); // 0=Dom,1=Lun,…,6=Sab
+function getTodayScheduleIdx() {
+    if (todayIdx >= 1 && todayIdx <= 5) return 0;
+    if (todayIdx === 6) return 1;
+    return 2;
+}
+const todaySchedule = getTodayScheduleIdx();
+
+const scheduleEl = document.getElementById('schedule-container');
+schedule.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'schedule-row' + (i === todaySchedule ? ' today' : '');
+    div.innerHTML = `<span>${s.day}</span><span>${s.hours}</span>`;
+    scheduleEl.appendChild(div);
+});
+
+/* ════════════════════════════════════════
+   FAQ
+════════════════════════════════════════ */
+const faqs = [
+    {
+        q: '¿Cuánto tiempo tarda la producción?',
+        a: 'El tiempo estándar es de 5 a 7 días hábiles una vez aprobada la prueba digital. Para pedidos urgentes contáctanos directamente.'
+    },
+    {
+        q: '¿Puedo ver una prueba antes de imprimir?',
+        a: 'Sí, todos los pedidos incluyen una prueba digital en PDF para tu aprobación antes de iniciar la impresión.'
+    },
+    {
+        q: '¿Hacen envíos a toda la república?',
+        a: 'Sí, enviamos a cualquier parte de México. El costo de envío se calcula al finalizar tu pedido según tu código postal.'
+    },
+    {
+        q: '¿Cuál es la cantidad mínima de pedido?',
+        a: 'No tenemos mínimo, puedes pedir desde 1 invitación. Sin embargo, los mejores precios por unidad se obtienen a partir de 50 piezas.'
+    },
+];
+
+const faqEl = document.getElementById('faq-container');
+faqs.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'faq-item';
+    item.innerHTML = `
+        <button class="faq-btn" aria-expanded="false" aria-controls="faq-body-${i}">
+            ${f.q}
+            <svg class="faq-arrow" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        </button>
+        <div class="faq-body" id="faq-body-${i}">${f.a}</div>`;
+    faqEl.appendChild(item);
+
+    const btn  = item.querySelector('.faq-btn');
+    const body = item.querySelector('.faq-body');
+    btn.addEventListener('click', () => {
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', !open);
+        body.classList.toggle('open', !open);
+    });
+});
+</script>
+
+</body>
+</html>

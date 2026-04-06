@@ -4,34 +4,777 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Diseños Acuña - Seguridad</title>
-
-  <!-- Tailwind CSS -->
+  <title>Seguridad</title>
   <link href="../src/css/output.css" rel="stylesheet" />
-
-  <!-- layout.js inyecta sidebar + header.
-       data-active debe coincidir con el "page" del enlace:
-       dashboard | pedidos | clientes | disenos | reportes | configuracion | seguridad -->
   <script src="../src/css/sidebar.js" data-active="seguridad" defer></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --indigo: #6366f1;
+      --indigo-dark: #4f46e5;
+      --indigo-light: #eef2ff;
+      --indigo-glow: rgba(99, 102, 241, 0.18);
+      --green: #22c55e;
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #eab308;
+      --amber-bg: #fffbeb;
+      --amber-border: #fde68a;
+      --amber-icon: #f59e0b;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --border: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --placeholder: #cbd5e1;
+      --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+      --shadow-btn: 0 2px 8px rgba(99, 102, 241, 0.30);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 7px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f1f5f9;
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    main {
+      padding: 28px 28px 40px;
+      max-width: 660px;
+      width: 100%;
+    }
+
+    /* ─────────── PAGE HEADER ─────────── */
+    .page-header {
+      margin-bottom: 22px;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .page-header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .page-header p {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* ─────────── CARDS ─────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .card+.card {
+      margin-top: 14px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--indigo-light);
+    }
+
+    .card-icon svg {
+      width: 16px;
+      height: 16px;
+      color: var(--indigo);
+    }
+
+    .card-header-text h2 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-header-text p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* ─────────── FORM ─────────── */
+    .form-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-field {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 42px 10px 14px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      color: var(--text-primary);
+      transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+      appearance: none;
+    }
+
+    .input-field::placeholder {
+      color: var(--placeholder);
+    }
+
+    .input-field:hover {
+      border-color: #cbd5e1;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 3.5px var(--indigo-glow);
+      background: #fff;
+    }
+
+    .input-field.error {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+    }
+
+    .input-field.success {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.10);
+    }
+
+    .toggle-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .toggle-btn:hover {
+      color: var(--text-secondary);
+    }
+
+    .toggle-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .field-error {
+      font-size: 0.75rem;
+      color: var(--red);
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .field-error.visible {
+      display: flex;
+    }
+
+    /* ─────────── STRENGTH ─────────── */
+    #strengthWrap {
+      display: none;
+      margin-top: 8px;
+    }
+
+    #strengthWrap.visible {
+      display: block;
+    }
+
+    .strength-track {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+
+    .strength-segment {
+      flex: 1;
+      height: 3px;
+      border-radius: 99px;
+      background: var(--border);
+      transition: background-color 0.25s;
+    }
+
+    #strengthLabel {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* ─────────── REQUIREMENTS pills ─────────── */
+    #reqList {
+      display: none;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    #reqList.visible {
+      display: flex;
+    }
+
+    .req-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .req-item.ok {
+      background: #f0fdf4;
+      color: #16a34a;
+      border-color: #bbf7d0;
+    }
+
+    .req-dot {
+      font-size: 0.65rem;
+    }
+
+    /* ─────────── FORM ACTIONS ─────────── */
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      padding-top: 4px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.16s;
+      padding: 10px 20px;
+      border: none;
+      white-space: nowrap;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-2);
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background: var(--indigo);
+      color: #fff;
+      box-shadow: var(--shadow-btn);
+    }
+
+    .btn-primary:hover {
+      background: var(--indigo-dark);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .spinner {
+      display: none;
+      width: 15px;
+      height: 15px;
+      border: 2.5px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .spinner.visible {
+      display: block;
+    }
+
+    /* ─────────── ALERT CARD ─────────── */
+    .alert-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 20px;
+    }
+
+    .alert-icon-wrap {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-border);
+      margin-top: 1px;
+    }
+
+    .alert-icon-wrap svg {
+      width: 15px;
+      height: 15px;
+      color: var(--amber-icon);
+    }
+
+    .alert-text strong {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: block;
+    }
+
+    .alert-text p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      line-height: 1.5;
+    }
+
+    /* ─────────── TOAST ─────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 18px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #fff;
+      min-width: 240px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    #toast.success {
+      background: #16a34a;
+    }
+
+    #toast.error {
+      background: var(--red);
+    }
+
+    /* ─────────── ANIMATIONS ─────────── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ─────────── RESPONSIVE ─────────── */
+    @media (max-width: 600px) {
+      main {
+        padding: 16px 14px 32px;
+      }
+
+      .form-body {
+        padding: 16px;
+        gap: 16px;
+      }
+
+      .alert-card {
+        padding: 14px 16px;
+      }
+
+      .form-actions {
+        flex-direction: column-reverse;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 
-<body class="bg-slate-100 text-gray-800">
+<body>
 
-  <!--
-    Todo lo que pongas aquí dentro quedará automáticamente
-    a la DERECHA del sidebar y DEBAJO del header.
-    Usa <main class="flex-1 p-6 space-y-6"> como contenedor raíz.
-  -->
-  <main class="flex-1 p-6 space-y-6">
+  <div id="toast" role="alert" aria-live="polite">
+    <span id="toast-icon"></span>
+    <span id="toast-msg"></span>
+  </div>
 
-    <!-- ═══════════════════════════════════════
-         AQUÍ VA EL CONTENIDO ÚNICO DE LA PÁGINA
-         ═══════════════════════════════════════ -->
+  <main>
+    <!-- Header -->
+    <div class="page-header">
+      <h1>Seguridad</h1>
+      <p>Administra tu contraseña y acceso a la cuenta</p>
+    </div>
 
-    <p class="text-gray-400">seguridad</p>
+    <!-- Card cambio de contraseña -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <div class="card-header-text">
+          <h2>Cambiar contraseña</h2>
+          <p>Usa al menos 8 caracteres con letras y números</p>
+        </div>
+      </div>
+
+      <form id="passwordForm" class="form-body" novalidate>
+
+        <div class="field-group">
+          <label for="currentPassword">Contraseña actual</label>
+          <div class="input-wrap">
+            <input id="currentPassword" type="password" placeholder="••••••••" class="input-field"
+              autocomplete="current-password" />
+            <button type="button" class="toggle-btn" onclick="toggleVisibility('currentPassword', this)"
+              aria-label="Mostrar contraseña">
+              <svg class="eye-off" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+              <svg class="eye-on hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+          <span id="currentPasswordError" class="field-error"></span>
+        </div>
+
+        <div class="field-group">
+          <label for="newPassword">Nueva contraseña</label>
+          <div class="input-wrap">
+            <input id="newPassword" type="password" placeholder="••••••••" class="input-field"
+              oninput="evaluateStrength(this.value)" autocomplete="new-password" />
+            <button type="button" class="toggle-btn" onclick="toggleVisibility('newPassword', this)"
+              aria-label="Mostrar contraseña">
+              <svg class="eye-off" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+              <svg class="eye-on hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+          <span id="newPasswordError" class="field-error"></span>
+          <div id="strengthWrap">
+            <div class="strength-track">
+              <div id="s1" class="strength-segment"></div>
+              <div id="s2" class="strength-segment"></div>
+              <div id="s3" class="strength-segment"></div>
+              <div id="s4" class="strength-segment"></div>
+            </div>
+            <p id="strengthLabel"></p>
+          </div>
+          <div id="reqList">
+            <span id="req-len" class="req-item"><span class="req-dot">○</span> 8+ caracteres</span>
+            <span id="req-upp" class="req-item"><span class="req-dot">○</span> Mayúscula</span>
+            <span id="req-num" class="req-item"><span class="req-dot">○</span> Número</span>
+            <span id="req-spec" class="req-item"><span class="req-dot">○</span> Carácter especial</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="confirmPassword">Confirmar nueva contraseña</label>
+          <div class="input-wrap">
+            <input id="confirmPassword" type="password" placeholder="••••••••" class="input-field"
+              autocomplete="new-password" />
+            <button type="button" class="toggle-btn" onclick="toggleVisibility('confirmPassword', this)"
+              aria-label="Mostrar contraseña">
+              <svg class="eye-off" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+              <svg class="eye-on hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+          <span id="confirmPasswordError" class="field-error"></span>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="resetForm()">Cancelar</button>
+          <button type="submit" id="submitBtn" class="btn btn-primary">
+            <span id="submitText">Guardar cambios</span>
+            <div id="submitSpinner" class="spinner"></div>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Aviso sesiones -->
+    <div class="card" style="animation-delay:0.1s">
+      <div class="alert-card">
+        <div class="alert-icon-wrap">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+        </div>
+        <div class="alert-text">
+          <strong>Al cambiar tu contraseña</strong>
+          <p>Se cerrarán todas las sesiones activas en otros dispositivos. Tendrás que iniciar sesión nuevamente.</p>
+        </div>
+      </div>
+    </div>
 
   </main>
 
-</body>
+  <script>
+    const MOCK_USERS = [
+      { id: 1, email: 'admin@ejemplo.com', password: 'Admin123' },
+      { id: 2, email: 'usuario@ejemplo.com', password: 'User456@' },
+    ];
+    const CURRENT_USER_ID = 1;
 
+    function toggleVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const isText = input.type === 'text';
+      input.type = isText ? 'password' : 'text';
+      btn.querySelector('.eye-off').classList.toggle('hidden', !isText);
+      btn.querySelector('.eye-on').classList.toggle('hidden', isText);
+    }
+
+    const checks = {
+      len: v => v.length >= 8,
+      upp: v => /[A-Z]/.test(v),
+      num: v => /[0-9]/.test(v),
+      spec: v => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v),
+    };
+    const strengthColors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e'];
+    const strengthLabels = ['', 'Muy débil', 'Débil', 'Buena', 'Fuerte'];
+
+    function evaluateStrength(val) {
+      const wrap = document.getElementById('strengthWrap');
+      const reqList = document.getElementById('reqList');
+      if (!val) {
+        wrap.classList.remove('visible');
+        reqList.classList.remove('visible');
+        ['s1', 's2', 's3', 's4'].forEach(id => document.getElementById(id).style.backgroundColor = '');
+        return;
+      }
+      wrap.classList.add('visible');
+      reqList.classList.add('visible');
+      let score = 0;
+      for (const [key, fn] of Object.entries(checks)) {
+        const ok = fn(val);
+        if (ok) score++;
+        const el = document.getElementById('req-' + key);
+        el.querySelector('.req-dot').textContent = ok ? '✓' : '○';
+        el.classList.toggle('ok', ok);
+      }
+      const color = strengthColors[score];
+      ['s1', 's2', 's3', 's4'].forEach((id, i) => {
+        document.getElementById(id).style.backgroundColor = i < score ? color : '#e2e8f0';
+      });
+      const lbl = document.getElementById('strengthLabel');
+      lbl.textContent = strengthLabels[score];
+      lbl.style.color = color;
+    }
+
+    function setFieldState(inputId, errorId, msg) {
+      const input = document.getElementById(inputId);
+      const errEl = document.getElementById(errorId);
+      if (msg) {
+        input.classList.add('error'); input.classList.remove('success');
+        errEl.textContent = msg; errEl.classList.add('visible');
+        return false;
+      } else {
+        input.classList.remove('error'); input.classList.add('success');
+        errEl.classList.remove('visible');
+        return true;
+      }
+    }
+
+    function validateForm(currentVal, newVal, confirmVal) {
+      let valid = true;
+      const user = MOCK_USERS.find(u => u.id === CURRENT_USER_ID);
+      if (!currentVal) {
+        valid = setFieldState('currentPassword', 'currentPasswordError', 'Ingresa tu contraseña actual') && valid;
+      } else if (currentVal !== user.password) {
+        valid = setFieldState('currentPassword', 'currentPasswordError', 'La contraseña actual es incorrecta') && valid;
+      } else { setFieldState('currentPassword', 'currentPasswordError', ''); }
+
+      if (!newVal) {
+        valid = setFieldState('newPassword', 'newPasswordError', 'Ingresa una nueva contraseña') && valid;
+      } else if (!checks.len(newVal)) {
+        valid = setFieldState('newPassword', 'newPasswordError', 'Mínimo 8 caracteres') && valid;
+      } else if (newVal === currentVal) {
+        valid = setFieldState('newPassword', 'newPasswordError', 'Debe ser diferente a la contraseña actual') && valid;
+      } else { setFieldState('newPassword', 'newPasswordError', ''); }
+
+      if (!confirmVal) {
+        valid = setFieldState('confirmPassword', 'confirmPasswordError', 'Confirma tu nueva contraseña') && valid;
+      } else if (newVal !== confirmVal) {
+        valid = setFieldState('confirmPassword', 'confirmPasswordError', 'Las contraseñas no coinciden') && valid;
+      } else { setFieldState('confirmPassword', 'confirmPasswordError', ''); }
+
+      return valid;
+    }
+
+    let toastTimeout;
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.className = type;
+      document.getElementById('toast-icon').textContent = type === 'success' ? '✓' : '✕';
+      document.getElementById('toast-msg').textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentVal = document.getElementById('currentPassword').value;
+      const newVal = document.getElementById('newPassword').value;
+      const confirmVal = document.getElementById('confirmPassword').value;
+      if (!validateForm(currentVal, newVal, confirmVal)) return;
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      document.getElementById('submitText').textContent = 'Guardando…';
+      document.getElementById('submitSpinner').classList.add('visible');
+
+      await new Promise(r => setTimeout(r, 1400));
+      const user = MOCK_USERS.find(u => u.id === CURRENT_USER_ID);
+      user.password = newVal;
+
+      btn.disabled = false;
+      document.getElementById('submitText').textContent = 'Guardar cambios';
+      document.getElementById('submitSpinner').classList.remove('visible');
+      resetForm();
+      showToast('Contraseña actualizada correctamente');
+    });
+
+    function resetForm() {
+      document.getElementById('passwordForm').reset();
+      ['currentPassword', 'newPassword', 'confirmPassword'].forEach(id => {
+        document.getElementById(id).classList.remove('error', 'success');
+      });
+      ['currentPasswordError', 'newPasswordError', 'confirmPasswordError'].forEach(id => {
+        document.getElementById(id).classList.remove('visible');
+      });
+      document.getElementById('strengthWrap').classList.remove('visible');
+      document.getElementById('reqList').classList.remove('visible');
+      ['s1', 's2', 's3', 's4'].forEach(id => document.getElementById(id).style.backgroundColor = '');
+    }
+
+    document.getElementById('confirmPassword').addEventListener('input', function () {
+      const newVal = document.getElementById('newPassword').value;
+      if (!this.value) return;
+      if (this.value !== newVal) setFieldState('confirmPassword', 'confirmPasswordError', 'Las contraseñas no coinciden');
+      else setFieldState('confirmPassword', 'confirmPasswordError', '');
+    });
+  </script>
+</body>
 </html>

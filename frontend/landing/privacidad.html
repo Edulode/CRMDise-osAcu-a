@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviso de Privacidad | Diseños Acuña</title>
+    <script src="../src/css/navbar.js" defer></script>
+    <link href="../src/css/output.css" rel="stylesheet">
+    <script src="../src/css/footer.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold:        #B8962E;
+            --gold-light:  #C9A84C;
+            --gold-pale:   rgba(184,150,46,0.08);
+            --gold-border: rgba(184,150,46,0.25);
+            --dark:        #1a1a2e;
+            --text-muted:  #6b7280;
+            --bg:          #f5f4f0;
+            --white:       #ffffff;
+            --border:      #e4e1d8;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+        }
+
+        .hero {
+            background: var(--dark);
+            padding: 4.5rem 2rem 3.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 15% 50%, rgba(184,150,46,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 60% at 85% 50%, rgba(184,150,46,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.9rem, 4vw, 2.8rem);
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.15;
+            margin-bottom: 0.8rem;
+            position: relative;
+        }
+
+        .hero h1 em { font-style: italic; color: var(--gold-light); }
+
+        .hero-meta {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.35);
+            position: relative;
+        }
+
+        .wrap {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 3.5rem 1.5rem 5rem;
+        }
+
+        @media (max-width: 480px) {
+            .hero { padding: 3rem 1.2rem 2.5rem; }
+            .wrap { padding: 2.5rem 1.2rem 4rem; }
+        }
+
+        .section {
+            margin-bottom: 2.4rem;
+        }
+
+        .section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .section h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gold);
+            flex-shrink: 0;
+        }
+
+        .section p {
+            font-size: 0.93rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 0.6rem;
+        }
+
+        .section p:last-child { margin-bottom: 0; }
+
+        .section ul {
+            list-style: none;
+            margin: 0.4rem 0 0.6rem 1.4rem;
+        }
+
+        .section ul li {
+            font-size: 0.93rem;
+            color: var(--text-muted);
+            line-height: 1.75;
+            padding-left: 1rem;
+            position: relative;
+            margin-bottom: 0.2rem;
+        }
+
+        .section ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.67em;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--gold);
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin-bottom: 2.4rem;
+        }
+
+        .contact-box {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.3rem 1.5rem;
+            margin-top: 0.8rem;
+        }
+
+        .contact-box p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 0.4rem;
+        }
+
+        .contact-box p:last-child { margin-bottom: 0; }
+        .contact-box strong { color: var(--dark); font-weight: 600; }
+        .contact-box a { color: var(--gold); text-decoration: none; }
+        .contact-box a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<section class="hero">
+    <p class="eyebrow">Legal</p>
+    <h1>Aviso de <em>Privacidad</em></h1>
+    <p class="hero-meta">Última actualización: 2026</p>
+</section>
+
+<div class="wrap">
+
+    <div class="section">
+        <h2>Datos que recabamos</h2>
+        <p>Únicamente recabamos los datos necesarios para atender tu pedido:</p>
+        <ul>
+            <li>Nombre</li>
+            <li>Correo electrónico</li>
+            <li>Teléfono o WhatsApp</li>
+            <li>Domicilio de entrega (cuando aplique)</li>
+            <li>Información sobre tu evento</li>
+        </ul>
+        <p>No recabamos datos sensibles como información financiera o médica.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+        <h2>Para qué usamos tus datos</h2>
+        <p>Tus datos se usan exclusivamente para coordinar y entregar tu pedido, enviar la prueba digital para aprobación y responderte cuando nos contactas.</p>
+        <p>No vendemos, rentamos ni compartimos tu información con terceros para fines comerciales.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+        <h2>Cookies</h2>
+        <p>El sitio puede usar cookies propias para mejorar tu experiencia de navegación. No usamos cookies de publicidad dirigida. Puedes desactivarlas desde tu navegador cuando quieras.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+        <h2>Cambios a este aviso</h2>
+        <p>Podemos actualizar este aviso en cualquier momento. La versión vigente siempre estará disponible en esta página.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+        <h2>Contacto</h2>
+        <p>Para cualquier duda:</p>
+        <div class="contact-box">
+            <p><strong>Email:</strong> <a href="mailto:hola@disenosacuna.com">hola@disenosacuna.com</a></p>
+            <p><strong>WhatsApp:</strong> <a href="https://wa.me/5215512345678" target="_blank">+52 55 1234 5678</a></p>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

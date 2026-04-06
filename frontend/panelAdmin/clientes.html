@@ -4,11 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Diseños Acuña - Clientes</title>
+  <title>Clientes</title>
 
   <link href="../src/css/output.css" rel="stylesheet" />
   <script src="../src/css/sidebar.js" data-active="clientes" defer></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
 
   <style>
     :root {
@@ -16,89 +18,240 @@
       --color-gold: #c9a84c;
       --color-gold-light: #e8c56a;
     }
-    body { font-family: 'DM Sans', sans-serif; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+    }
 
     /* ── KPI cards hover ── */
-    .kpi-card { transition: transform 0.2s, box-shadow 0.2s; }
-    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+    .kpi-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
 
     /* ── Role badges ── */
-    .role-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
-    .role-cliente       { background: #e0f2fe; color: #0369a1; }
-    .role-empleado      { background: #f3e8ff; color: #7e22ce; }
-    .role-administrador { background: #fef9c3; color: #a16207; }
+    .role-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .role-cliente {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .role-empleado {
+      background: #f3e8ff;
+      color: #7e22ce;
+    }
+
+    .role-administrador {
+      background: #fef9c3;
+      color: #a16207;
+    }
 
     /* ── Estado badges ── */
-    .estado-activo   { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: #dcfce7; color: #15803d; }
-    .estado-inactivo { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; background: #fee2e2; color: #b91c1c; }
+    .estado-activo {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .estado-inactivo {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: #fee2e2;
+      color: #b91c1c;
+    }
 
     /* ── Avatar circle ── */
     .avatar {
-      width: 36px; height: 36px; border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
       background: var(--color-gold);
       color: var(--color-sidebar);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      flex-shrink: 0;
     }
 
     /* ── Search input ── */
-    .search-input:focus { outline: none; border-color: var(--color-gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--color-gold);
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+    }
 
     /* ── Dropdown filter ── */
     #filter-dropdown {
-      display: none; position: absolute; top: calc(100% + 6px); right: 0;
-      z-index: 200; min-width: 180px; background: #fff;
-      border: 1px solid #e2e8f0; border-radius: 10px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.12); overflow: hidden;
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 200;
+      min-width: 180px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
     }
-    #filter-dropdown.open { display: block; }
+
+    #filter-dropdown.open {
+      display: block;
+    }
+
     .filter-option {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 14px; font-size: 0.82rem; color: #374151;
-      cursor: pointer; transition: background 0.12s; font-family: 'DM Sans', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: #374151;
+      cursor: pointer;
+      transition: background 0.12s;
+      font-family: 'DM Sans', sans-serif;
     }
-    .filter-option:hover { background: #f8fafc; }
-    .filter-option.selected { color: var(--color-gold); font-weight: 600; background: #fffbeb; }
+
+    .filter-option:hover {
+      background: #f8fafc;
+    }
+
+    .filter-option.selected {
+      color: var(--color-gold);
+      font-weight: 600;
+      background: #fffbeb;
+    }
 
     /* ── Action buttons in table ── */
     .action-icon-btn {
-      padding: 6px; border-radius: 7px; border: none; background: transparent;
-      cursor: pointer; transition: background 0.15s; color: #9ca3af;
+      padding: 6px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #9ca3af;
     }
-    .action-icon-btn.edit:hover  { background: #eff6ff; color: #3b82f6; }
-    .action-icon-btn.trash:hover { background: #fef2f2; color: #ef4444; }
+
+    .action-icon-btn.edit:hover {
+      background: #eff6ff;
+      color: #3b82f6;
+    }
+
+    .action-icon-btn.trash:hover {
+      background: #fef2f2;
+      color: #ef4444;
+    }
 
     /* ── Pagination ── */
     .page-btn {
-      min-width: 34px; height: 34px; padding: 0 10px; border-radius: 8px;
-      border: 1px solid #e2e8f0; background: #fff; font-size: 0.82rem;
-      color: #374151; cursor: pointer; transition: all 0.15s;
-      font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center;
+      min-width: 34px;
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      font-size: 0.82rem;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .page-btn:hover:not(:disabled) { border-color: var(--color-gold); color: var(--color-gold); }
-    .page-btn.active { background: var(--color-gold); color: var(--color-sidebar); border-color: var(--color-gold); font-weight: 700; }
-    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--color-gold);
+      color: var(--color-gold);
+    }
+
+    .page-btn.active {
+      background: var(--color-gold);
+      color: var(--color-sidebar);
+      border-color: var(--color-gold);
+      font-weight: 700;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
     /* ── Modal ── */
     #modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      z-index: 1000; align-items: center; justify-content: center; padding: 16px;
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
     }
-    #modal-overlay.open { display: flex; }
+
+    #modal-overlay.open {
+      display: flex;
+    }
+
     #modal-box {
-      background: #fff; border-radius: 18px; width: 100%; max-width: 500px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden;
+      background: #fff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
     }
+
     .modal-input {
-      width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
-      font-size: 0.875rem; font-family: 'DM Sans', sans-serif; color: #1f2937;
-      transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box;
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      color: #1f2937;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
     }
-    .modal-input:focus { outline: none; border-color: var(--color-gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+
+    .modal-input:focus {
+      outline: none;
+      border-color: var(--color-gold);
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+    }
+
     .modal-select {
-      width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
-      font-size: 0.875rem; font-family: 'DM Sans', sans-serif; color: #1f2937;
-      background: white; cursor: pointer; box-sizing: border-box;
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      color: #1f2937;
+      background: white;
+      cursor: pointer;
+      box-sizing: border-box;
       appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%236b7280' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
@@ -106,18 +259,33 @@
       background-size: 16px;
       padding-right: 32px;
     }
-    .modal-select:focus { outline: none; border-color: var(--color-gold); }
+
+    .modal-select:focus {
+      outline: none;
+      border-color: var(--color-gold);
+    }
 
     /* ── Table rows ── */
-    #tbody-clientes tr { border-bottom: 1px solid #f1f5f9; }
-    #tbody-clientes tr:last-child { border-bottom: none; }
+    #tbody-clientes tr {
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    #tbody-clientes tr:last-child {
+      border-bottom: none;
+    }
 
     /* ══════════════════════════════════
        TABLA RESPONSIVE → cards en mobile
     ══════════════════════════════════ */
     @media (max-width: 767px) {
-      #thead-clientes { display: none; }
-      #tbody-clientes { display: block; padding: 12px; }
+      #thead-clientes {
+        display: none;
+      }
+
+      #tbody-clientes {
+        display: block;
+        padding: 12px;
+      }
 
       #tbody-clientes tr {
         display: grid;
@@ -129,25 +297,82 @@
         border-radius: 14px;
         padding: 14px;
         margin-bottom: 10px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
         align-items: center;
         border-bottom: none !important;
       }
 
-      #tbody-clientes td { padding: 0; border: none; }
-      #tbody-clientes td.td-avatar  { grid-column: 1; grid-row: 1 / 3; display: flex; align-items: center; }
-      #tbody-clientes td.td-nombre  { grid-column: 2; grid-row: 1; font-weight: 600; font-size: 0.9rem; }
-      #tbody-clientes td.td-email   { grid-column: 2 / 4; grid-row: 2; font-size: 0.78rem; color: #6b7280; }
-      #tbody-clientes td.td-rol     { grid-column: 4; grid-row: 1; display: flex; justify-content: flex-end; }
-      #tbody-clientes td.td-fecha   { grid-column: 1; grid-row: 3; display: flex; flex-direction: column; }
-      #tbody-clientes td.td-pedidos { grid-column: 2; grid-row: 3; display: flex; flex-direction: column; }
-      #tbody-clientes td.td-estado  { grid-column: 3; grid-row: 3; display: flex; flex-direction: column; }
-      #tbody-clientes td.td-acciones{ grid-column: 4; grid-row: 3; display: flex; justify-content: flex-end; align-items: center; }
+      #tbody-clientes td {
+        padding: 0;
+        border: none;
+      }
+
+      #tbody-clientes td.td-avatar {
+        grid-column: 1;
+        grid-row: 1 / 3;
+        display: flex;
+        align-items: center;
+      }
+
+      #tbody-clientes td.td-nombre {
+        grid-column: 2;
+        grid-row: 1;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      #tbody-clientes td.td-email {
+        grid-column: 2 / 4;
+        grid-row: 2;
+        font-size: 0.78rem;
+        color: #6b7280;
+      }
+
+      #tbody-clientes td.td-rol {
+        grid-column: 4;
+        grid-row: 1;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      #tbody-clientes td.td-fecha {
+        grid-column: 1;
+        grid-row: 3;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #tbody-clientes td.td-pedidos {
+        grid-column: 2;
+        grid-row: 3;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #tbody-clientes td.td-estado {
+        grid-column: 3;
+        grid-row: 3;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #tbody-clientes td.td-acciones {
+        grid-column: 4;
+        grid-row: 3;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+      }
 
       #tbody-clientes td[data-label]::before {
         content: attr(data-label);
-        font-size: 0.65rem; font-weight: 600; color: #9ca3af;
-        text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; display: block;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 2px;
+        display: block;
       }
     }
   </style>
@@ -158,50 +383,39 @@
   <main class="flex-1 p-6 space-y-6">
 
     <!-- ══ Search + actions bar ══ -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
 
       <!-- Search -->
       <div class="relative flex-1">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+          stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <input id="search-input" type="text" placeholder="Buscar por nombre o email..."
           class="search-input w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-slate-50 text-gray-700 placeholder-gray-400" />
       </div>
 
-      <!-- Filter + New user -->
-      <div class="flex items-center gap-3 shrink-0">
+      <!-- Role filter -->
+      <select id="filter-select" onchange="selectFilterNative(this)"
+        class="shrink-0 px-4 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition bg-white cursor-pointer"
+        style="appearance: auto;">
+        <option value="">Todos los roles</option>
+        <option value="Cliente">Cliente</option>
+        <option value="Empleado">Empleado</option>
+        <option value="Administrador">Administrador</option>
+      </select>
 
-        <!-- Role filter -->
-        <div class="relative" id="filter-wrap">
-          <button onclick="toggleFilter(event)"
-            class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition bg-white">
-            <span id="filter-label">Todos los roles</span>
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div id="filter-dropdown">
-            <div class="filter-option selected" data-value="" onclick="selectFilter(this)">
-              Todos los roles
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-            </div>
-            <div class="filter-option" data-value="Cliente" onclick="selectFilter(this)">Cliente</div>
-            <div class="filter-option" data-value="Empleado" onclick="selectFilter(this)">Empleado</div>
-            <div class="filter-option" data-value="Administrador" onclick="selectFilter(this)">Administrador</div>
-          </div>
-        </div>
-
-        <!-- New user button -->
-        <button onclick="abrirModal()"
-          class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition"
-          style="background: var(--color-gold); color: #1a2232;">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Nuevo Usuario
-        </button>
-      </div>
+      <!-- New user button -->
+      <button onclick="abrirModal()"
+        class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition shrink-0 whitespace-nowrap"
+        style="background: var(--color-gold); color: #1a2232;">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Nuevo Usuario
+      </button>
     </div>
 
     <!-- ══ KPI Cards ══ -->
@@ -260,7 +474,8 @@
         <h3 class="text-lg font-semibold text-gray-900" id="modal-title">Crear Nuevo Usuario</h3>
         <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
@@ -341,20 +556,20 @@
 
     /* ── Datos simulados ─────────────────────────── */
     let usuariosData = [
-      { nombre: 'María',   apellidos: 'González',  email: 'maria@ejemplo.com',   telefono: '', rol: 'Cliente',       fecha: '15 Ene 2026', pedidos: 8,  estado: 'Activo'   },
-      { nombre: 'Carlos',  apellidos: 'Ramírez',   email: 'carlos@ejemplo.com',  telefono: '', rol: 'Empleado',      fecha: '10 Ene 2026', pedidos: 0,  estado: 'Activo'   },
-      { nombre: 'Ana',     apellidos: 'Martínez',  email: 'ana@ejemplo.com',     telefono: '', rol: 'Cliente',       fecha: '8 Feb 2026',  pedidos: 15, estado: 'Activo'   },
-      { nombre: 'Luis',    apellidos: 'Hernández', email: 'luis@ejemplo.com',    telefono: '', rol: 'Administrador', fecha: '1 Ene 2026',  pedidos: 0,  estado: 'Activo'   },
-      { nombre: 'Sofía',   apellidos: 'López',     email: 'sofia@ejemplo.com',   telefono: '', rol: 'Cliente',       fecha: '20 Ene 2026', pedidos: 3,  estado: 'Activo'   },
-      { nombre: 'Diego',   apellidos: 'Torres',    email: 'diego@ejemplo.com',   telefono: '', rol: 'Cliente',       fecha: '5 Feb 2026',  pedidos: 1,  estado: 'Inactivo' },
-      { nombre: 'Laura',   apellidos: 'Sánchez',   email: 'laura@ejemplo.com',   telefono: '', rol: 'Empleado',      fecha: '12 Ene 2026', pedidos: 0,  estado: 'Activo'   },
-      { nombre: 'Roberto', apellidos: 'Díaz',      email: 'roberto@ejemplo.com', telefono: '', rol: 'Cliente',       fecha: '28 Ene 2026', pedidos: 5,  estado: 'Activo'   },
+      { nombre: 'María', apellidos: 'González', email: 'maria@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '15 Ene 2026', pedidos: 8, estado: 'Activo' },
+      { nombre: 'Carlos', apellidos: 'Ramírez', email: 'carlos@ejemplo.com', telefono: '', rol: 'Empleado', fecha: '10 Ene 2026', pedidos: 0, estado: 'Activo' },
+      { nombre: 'Ana', apellidos: 'Martínez', email: 'ana@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '8 Feb 2026', pedidos: 15, estado: 'Activo' },
+      { nombre: 'Luis', apellidos: 'Hernández', email: 'luis@ejemplo.com', telefono: '', rol: 'Administrador', fecha: '1 Ene 2026', pedidos: 0, estado: 'Activo' },
+      { nombre: 'Sofía', apellidos: 'López', email: 'sofia@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '20 Ene 2026', pedidos: 3, estado: 'Activo' },
+      { nombre: 'Diego', apellidos: 'Torres', email: 'diego@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '5 Feb 2026', pedidos: 1, estado: 'Inactivo' },
+      { nombre: 'Laura', apellidos: 'Sánchez', email: 'laura@ejemplo.com', telefono: '', rol: 'Empleado', fecha: '12 Ene 2026', pedidos: 0, estado: 'Activo' },
+      { nombre: 'Roberto', apellidos: 'Díaz', email: 'roberto@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '28 Ene 2026', pedidos: 5, estado: 'Activo' },
     ];
 
     const PER_PAGE = 8;
     let currentPage = 1;
-    let filtroRol   = '';
-    let filtroBusq  = '';
+    let filtroRol = '';
+    let filtroBusq = '';
 
     /* ── Helpers ─────────────────────────────────── */
     function initials(nombre, apellidos) {
@@ -381,7 +596,7 @@
     /* ── Filtered list ───────────────────────────── */
     function filteredData() {
       return usuariosData.filter(u => {
-        const matchRol  = !filtroRol  || u.rol === filtroRol;
+        const matchRol = !filtroRol || u.rol === filtroRol;
         const nc = nombreCompleto(u).toLowerCase();
         const matchBusq = !filtroBusq || nc.includes(filtroBusq) || u.email.toLowerCase().includes(filtroBusq);
         return matchRol && matchBusq;
@@ -390,15 +605,15 @@
 
     /* ── Render KPIs ─────────────────────────────── */
     function renderKPIs() {
-      document.getElementById('kpi-total').textContent     = usuariosData.length;
-      document.getElementById('kpi-clientes').textContent  = usuariosData.filter(u => u.rol === 'Cliente').length;
+      document.getElementById('kpi-total').textContent = usuariosData.length;
+      document.getElementById('kpi-clientes').textContent = usuariosData.filter(u => u.rol === 'Cliente').length;
       document.getElementById('kpi-empleados').textContent = usuariosData.filter(u => u.rol === 'Empleado').length;
-      document.getElementById('kpi-admins').textContent    = usuariosData.filter(u => u.rol === 'Administrador').length;
+      document.getElementById('kpi-admins').textContent = usuariosData.filter(u => u.rol === 'Administrador').length;
     }
 
     /* ── Render table ────────────────────────────── */
     function renderTabla() {
-      const data  = filteredData();
+      const data = filteredData();
       const total = data.length;
       const pages = Math.max(1, Math.ceil(total / PER_PAGE));
       if (currentPage > pages) currentPage = pages;
@@ -483,63 +698,46 @@
 
     /* ── Search ──────────────────────────────────── */
     document.getElementById('search-input').addEventListener('input', function () {
-      filtroBusq  = this.value.toLowerCase().trim();
+      filtroBusq = this.value.toLowerCase().trim();
       currentPage = 1;
       renderTabla();
     });
 
     /* ── Filter dropdown ─────────────────────────── */
-    function toggleFilter(e) {
-      e.stopPropagation();
-      document.getElementById('filter-dropdown').classList.toggle('open');
-    }
-    function selectFilter(el) {
-      filtroRol   = el.dataset.value;
+    function selectFilterNative(el) {
+      filtroRol = el.value;
       currentPage = 1;
-      document.getElementById('filter-label').textContent = el.textContent.trim();
-      document.querySelectorAll('.filter-option').forEach(o => {
-        o.classList.toggle('selected', o === el);
-        const check = o.querySelector('svg');
-        if (check) check.remove();
-        if (o === el) {
-          o.insertAdjacentHTML('beforeend', `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>`);
-        }
-      });
-      document.getElementById('filter-dropdown').classList.remove('open');
       renderTabla();
     }
-    document.addEventListener('click', () => {
-      document.getElementById('filter-dropdown').classList.remove('open');
-    });
 
     /* ── Modal ───────────────────────────────────── */
     function abrirModal(idx = null) {
       const esEditar = idx !== null;
       document.getElementById('modal-idx').value = esEditar ? idx : '';
-      document.getElementById('modal-title').textContent   = esEditar ? 'Editar Usuario' : 'Crear Nuevo Usuario';
-      document.getElementById('btn-guardar').textContent   = esEditar ? 'Guardar Cambios' : 'Crear Usuario';
+      document.getElementById('modal-title').textContent = esEditar ? 'Editar Usuario' : 'Crear Nuevo Usuario';
+      document.getElementById('btn-guardar').textContent = esEditar ? 'Guardar Cambios' : 'Crear Usuario';
 
       // Mostrar/ocultar campos según modo
       document.getElementById('field-telefono').style.display = esEditar ? 'none' : '';
-      document.getElementById('field-password').style.display  = esEditar ? 'none' : '';
-      document.getElementById('field-estado').style.display    = esEditar ? ''     : 'none';
+      document.getElementById('field-password').style.display = esEditar ? 'none' : '';
+      document.getElementById('field-estado').style.display = esEditar ? '' : 'none';
 
       if (esEditar) {
         const u = usuariosData[idx];
         const partes = u.nombre.split(' ');
         // Si el nombre ya estaba como nombre completo en versión antigua, lo separamos
-        document.getElementById('m-nombre').value    = u.nombre || '';
+        document.getElementById('m-nombre').value = u.nombre || '';
         document.getElementById('m-apellidos').value = u.apellidos || '';
-        document.getElementById('m-email').value     = u.email;
-        document.getElementById('m-rol').value       = u.rol;
-        document.getElementById('m-estado').value    = u.estado;
+        document.getElementById('m-email').value = u.email;
+        document.getElementById('m-rol').value = u.rol;
+        document.getElementById('m-estado').value = u.estado;
       } else {
-        document.getElementById('m-nombre').value    = '';
+        document.getElementById('m-nombre').value = '';
         document.getElementById('m-apellidos').value = '';
-        document.getElementById('m-email').value     = '';
-        document.getElementById('m-telefono').value  = '';
-        document.getElementById('m-password').value  = '';
-        document.getElementById('m-rol').value       = 'Cliente';
+        document.getElementById('m-email').value = '';
+        document.getElementById('m-telefono').value = '';
+        document.getElementById('m-password').value = '';
+        document.getElementById('m-rol').value = 'Cliente';
       }
       document.getElementById('modal-overlay').classList.add('open');
     }
@@ -548,12 +746,12 @@
     function cerrarModalOverlay(e) { if (e.target === document.getElementById('modal-overlay')) cerrarModal(); }
 
     function guardarUsuario() {
-      const nombre    = document.getElementById('m-nombre').value.trim();
+      const nombre = document.getElementById('m-nombre').value.trim();
       const apellidos = document.getElementById('m-apellidos').value.trim();
-      const email     = document.getElementById('m-email').value.trim();
-      const rol       = document.getElementById('m-rol').value;
-      const idx       = document.getElementById('modal-idx').value;
-      const esEditar  = idx !== '';
+      const email = document.getElementById('m-email').value.trim();
+      const rol = document.getElementById('m-rol').value;
+      const idx = document.getElementById('modal-idx').value;
+      const esEditar = idx !== '';
 
       if (!nombre || !email) { alert('Nombre y email son requeridos.'); return; }
 
@@ -589,4 +787,5 @@
   </script>
 
 </body>
+
 </html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nosotros | Diseños Acuña</title>
+    <script src="../src/css/navbar.js" defer></script>
+    <link href="../src/css/output.css" rel="stylesheet">
+    <script src="../src/css/footer.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold:        #B8962E;
+            --gold-light:  #C9A84C;
+            --gold-pale:   rgba(184,150,46,0.08);
+            --gold-border: rgba(184,150,46,0.25);
+            --dark:        #1a1a2e;
+            --text-muted:  #6b7280;
+            --bg:          #f5f4f0;
+            --white:       #ffffff;
+            --border:      #e4e1d8;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+        }
+
+        /* ══ HERO ══ */
+        .hero {
+            background: var(--dark);
+            padding: 5rem 2rem 4.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 15% 50%, rgba(184,150,46,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 60% at 85% 50%, rgba(184,150,46,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.12;
+            margin-bottom: 1.1rem;
+            position: relative;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--gold-light);
+        }
+
+        .hero p {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.6);
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.75;
+            position: relative;
+        }
+
+        /* ══ CONTENEDOR ══ */
+        .wrap {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem 5rem;
+        }
+
+        /* ══ HISTORIA ══ */
+        .historia {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            margin-bottom: 4rem;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gold);
+            background: var(--gold-pale);
+            border: 1px solid var(--gold-border);
+            border-radius: 20px;
+            padding: 0.28rem 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .historia-text h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.6rem, 3vw, 2rem);
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .historia-text h2 em {
+            font-style: italic;
+            color: var(--gold);
+        }
+
+        .historia-text p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 0.85rem;
+        }
+
+        .historia-text p:last-child { margin-bottom: 0; }
+
+        /* Placeholder de imagen — reemplaza con un <img> real */
+        .historia-img {
+            background: var(--dark);
+            border-radius: 16px;
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .historia-img::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 70% at 50% 40%, rgba(184,150,46,0.15) 0%, transparent 70%);
+        }
+
+        .img-placeholder {
+            position: relative;
+            text-align: center;
+        }
+
+        .img-placeholder svg {
+            width: 56px;
+            height: 56px;
+            color: var(--gold);
+            opacity: 0.6;
+            display: block;
+            margin: 0 auto 0.6rem;
+        }
+
+        .img-placeholder span {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.05em;
+        }
+
+        /* ══ STATS ══ */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 4rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.4rem 1.2rem;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--gold);
+            line-height: 1;
+            margin-bottom: 0.35rem;
+        }
+
+        .stat-label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* ══ VALORES ══ */
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.5rem, 3vw, 1.9rem);
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .section-header h2 em {
+            font-style: italic;
+            color: var(--gold);
+        }
+
+        .valores-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 4rem;
+        }
+
+        .valor-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.4rem 1.3rem;
+        }
+
+        .valor-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gold-pale);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.9rem;
+        }
+
+        .valor-icon svg {
+            width: 20px;
+            height: 20px;
+            color: var(--gold);
+        }
+
+        .valor-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .valor-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.65;
+        }
+
+        /* ══ CTA ══ */
+        .cta-band {
+            background: var(--dark);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-band::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(184,150,46,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-band h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.4rem, 3vw, 1.9rem);
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.6rem;
+            position: relative;
+        }
+
+        .cta-band h2 em {
+            font-style: italic;
+            color: var(--gold-light);
+        }
+
+        .cta-band p {
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.55);
+            margin-bottom: 1.6rem;
+            position: relative;
+        }
+
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--gold);
+            color: #ffffff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 0.85rem 1.8rem;
+            border-radius: 8px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            position: relative;
+        }
+
+        .btn-cta:hover { background: var(--gold-light); transform: translateY(-1px); }
+        .btn-cta:active { transform: scale(0.98); }
+        .btn-cta svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 640px) {
+            .hero { padding: 3.5rem 1.2rem 3rem; }
+            .wrap { padding: 2.5rem 1.2rem 4rem; }
+            .historia { grid-template-columns: 1fr; gap: 2rem; }
+            .historia-img { order: -1; }
+            .stats { grid-template-columns: 1fr 1fr; }
+            .valores-grid { grid-template-columns: 1fr; }
+            .cta-band { padding: 2.2rem 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+    <p class="eyebrow">Nuestra historia</p>
+    <h1>Detrás de cada invitación<br>hay <em>mucho amor</em></h1>
+    <p>Somos Diseños Acuña, un pequeño negocio familiar dedicado a hacer que cada evento comience con la invitación perfecta.</p>
+</section>
+
+<div class="wrap">
+
+    <!-- ══ HISTORIA ══ -->
+    <div class="historia">
+        <div class="historia-text">
+            <span class="tag">Quiénes somos</span>
+            <h2>Nacimos para hacer<br>tus eventos <em>inolvidables</em></h2>
+            <p>Todo comenzó con una idea sencilla: que cada persona merezca invitaciones tan especiales como el momento que está por celebrar. Desde bodas y quinceañeras hasta bautizos y cumpleaños, nos encargamos de que el primer vistazo a tu evento sea memorable.</p>
+            <p>Trabajamos con atención al detalle, cuidando cada diseño como si fuera el nuestro propio. Porque sabemos que detrás de cada invitación hay una historia que merece ser contada con estilo.</p>
+        </div>
+
+        <!-- Reemplaza este bloque con un <img src="tu-foto.jpg" ...> cuando tengas la imagen -->
+        <div class="historia-img">
+            <div class="img-placeholder">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <path d="M3 9h18M9 21V9"/>
+                </svg>
+                <span>Tu foto aquí</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ STATS ══ -->
+    <div class="stats">
+        <div class="stat-card">
+            <p class="stat-num">+500</p>
+            <p class="stat-label">Eventos celebrados</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-num">5★</p>
+            <p class="stat-label">Calificación promedio</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-num">100%</p>
+            <p class="stat-label">Prueba digital incluida</p>
+        </div>
+    </div>
+
+    <!-- ══ VALORES ══ -->
+    <div class="section-header">
+        <span class="tag">Lo que nos mueve</span>
+        <h2>Nuestros <em>valores</em></h2>
+    </div>
+
+    <div class="valores-grid">
+        <div class="valor-card">
+            <div class="valor-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402C1 3.518 4.268 2 7 2c1.981 0 3.781.9 5 2.18A6.218 6.218 0 0117 2c2.732 0 6 1.51 6 5.191 0 4.105-5.37 8.863-11 14.402z"/>
+                </svg>
+            </div>
+            <h3>Hecho con cariño</h3>
+            <p>Cada diseño lo tratamos como si fuera para nuestra propia familia. Ese cuidado se nota en el resultado final.</p>
+        </div>
+        <div class="valor-card">
+            <div class="valor-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <h3>Entrega puntual</h3>
+            <p>Sabemos que los eventos tienen fechas inamovibles. Nos comprometemos con tiempos de entrega claros y reales.</p>
+        </div>
+        <div class="valor-card">
+            <div class="valor-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </div>
+            <h3>Calidad garantizada</h3>
+            <p>Incluimos una prueba digital en cada pedido para que apruebes el diseño antes de imprimir. Sin sorpresas.</p>
+        </div>
+    </div>
+
+    <!-- ══ CTA ══ -->
+    <div class="cta-band">
+        <h2>¿Lista para crear tu <em>invitación perfecta</em>?</h2>
+        <p>Cuéntanos sobre tu evento y te ayudamos a hacerlo especial desde el primer detalle.</p>
+        <a href="contacto.html" class="btn-cta">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            Contáctanos
+        </a>
+    </div>
+
+</div>
+
+</body>
+</html>

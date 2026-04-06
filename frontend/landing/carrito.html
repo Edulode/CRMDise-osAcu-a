@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito | Diseños Acuña</title>
+    <script src="../src/css/navbar.js" defer></script>
+    <link href="../src/css/output.css" rel="stylesheet">
+    <script src="../src/css/footer.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold:       #B8962E;
+            --gold-light: #C9A84C;
+            --dark:       #1a1a2e;
+            --text-muted: #6b7280;
+            --bg:         #f5f4f0;
+            --white:      #ffffff;
+            --border:     #e4e1d8;
+            --danger:     #dc2626;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            min-height: 100vh;
+        }
+
+        /* ══ LAYOUT ══ */
+        .checkout-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* ══ STEPPER ══ */
+        .stepper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 2.5rem;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            border: 2px solid var(--border);
+            background: var(--white);
+            color: var(--text-muted);
+            transition: all 0.3s;
+            z-index: 1;
+        }
+
+        .step.active .step-circle {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--white);
+        }
+
+        .step.done .step-circle {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--white);
+        }
+
+        .step-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .step.active .step-label,
+        .step.done .step-label { color: var(--gold); }
+
+        .step-line {
+            width: 100px;
+            height: 2px;
+            background: var(--border);
+            margin-bottom: 1.4rem;
+            transition: background 0.3s;
+        }
+        .step-line.done { background: var(--gold); }
+
+        @media (max-width: 480px) {
+            .step-line { width: 40px; }
+            .step-circle { width: 36px; height: 36px; font-size: 0.9rem; }
+        }
+
+        /* ══ MAIN GRID ══ */
+        .checkout-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-grid { grid-template-columns: 1fr; }
+            .order-summary { order: 2; }
+            .checkout-main { order: 1; }
+        }
+
+        /* ══ PANEL BLANCO ══ */
+        .panel {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem;
+        }
+
+        .panel-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+        }
+
+        /* ══ CARRITO — ITEM ══ */
+        .cart-item {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1.2rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .cart-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .cart-item:first-child { padding-top: 0; }
+
+        .cart-img {
+            width: 80px;
+            height: 70px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .cart-info { display: flex; flex-direction: column; gap: 0.3rem; }
+
+        .cart-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--dark);
+        }
+
+        .cart-price-unit {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        .cart-qty-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.3rem;
+        }
+
+        .cart-qty-label {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        .cart-qty-input {
+            width: 64px;
+            height: 34px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--dark);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .cart-qty-input:focus { border-color: var(--gold); }
+
+        .cart-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.6rem;
+        }
+
+        .cart-subtotal {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--dark);
+        }
+
+        .cart-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--danger);
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .cart-delete:hover { background: #fef2f2; }
+        .cart-delete svg { width: 18px; height: 18px; }
+
+        /* Carrito vacío */
+        .empty-cart {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+        .empty-cart svg {
+            width: 56px; height: 56px;
+            color: var(--border);
+            margin-bottom: 1rem;
+        }
+        .empty-cart p { font-size: 1rem; margin-bottom: 1rem; }
+        .empty-cart a {
+            display: inline-block;
+            background: var(--gold);
+            color: #fff;
+            text-decoration: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .empty-cart a:hover { background: var(--gold-light); }
+
+        /* ══ RESUMEN ══ */
+        .order-summary { position: sticky; top: 90px; }
+
+        .summary-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 1.2rem;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+        }
+
+        .summary-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0.8rem 0;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--dark);
+        }
+
+        /* ══ BOTONES ══ */
+        .btn-primary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            background: var(--gold);
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 0.9rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            text-decoration: none;
+            margin-top: 1rem;
+        }
+        .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+        .btn-primary:disabled { background: var(--border); cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background: var(--white);
+            color: var(--dark);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 0.85rem 1.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+        .btn-secondary:hover { background: var(--bg); }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+        }
+
+        /* ══ FORMULARIO DATOS ══ */
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 500px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+        .form-group { margin-bottom: 1rem; }
+
+        .form-label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem;
+            color: var(--dark);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus { border-color: var(--gold); }
+        .form-input::placeholder { color: #bbb; }
+        .form-input.error { border-color: var(--danger); }
+
+        /* ══ PAGO ══ */
+        .ssl-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.9rem 1.1rem;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .ssl-badge svg { width: 20px; height: 20px; color: var(--gold); flex-shrink: 0; }
+
+        /* ══ CONFIRMACIÓN ══ */
+        .confirm-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(184,150,46,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.2rem;
+        }
+        .confirm-icon svg { width: 36px; height: 36px; color: var(--gold); }
+
+        .confirm-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .confirm-order-num {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .confirm-email-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .confirm-email-box strong { display: block; margin-top: 0.3rem; font-size: 1rem; color: var(--dark); }
+
+        .confirm-perks {
+            list-style: none;
+            margin-bottom: 1.8rem;
+        }
+        .confirm-perks li {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            padding: 0.3rem 0;
+        }
+        .confirm-perks li::before { content: "✓ "; color: var(--gold); font-weight: 700; }
+
+        .btn-ver-pedido {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gold);
+            color: #fff;
+            text-decoration: none;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.85rem 2rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-ver-pedido:hover { background: var(--gold-light); }
+
+        /* ══ HIDE/SHOW STEPS ══ */
+        .step-content { display: none; }
+        .step-content.active { display: block; }
+
+        /* ══ TOAST ══ */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--dark);
+            color: #fff;
+            font-size: 0.85rem;
+            font-family: 'DM Sans', sans-serif;
+            padding: 0.65rem 1.3rem;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 9999;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+<div class="checkout-wrapper">
+
+    <!-- ══ STEPPER ══ -->
+    <div class="stepper" id="stepper">
+        <div class="step active" id="step-dot-1">
+            <div class="step-circle" id="step-circle-1">1</div>
+            <span class="step-label">Carrito</span>
+        </div>
+        <div class="step-line" id="line-1"></div>
+        <div class="step" id="step-dot-2">
+            <div class="step-circle" id="step-circle-2">2</div>
+            <span class="step-label">Datos</span>
+        </div>
+        <div class="step-line" id="line-2"></div>
+        <div class="step" id="step-dot-3">
+            <div class="step-circle" id="step-circle-3">3</div>
+            <span class="step-label">Pago</span>
+        </div>
+        <div class="step-line" id="line-3"></div>
+        <div class="step" id="step-dot-4">
+            <div class="step-circle" id="step-circle-4">4</div>
+            <span class="step-label">Confirmación</span>
+        </div>
+    </div>
+
+    <!-- ══ GRID ══ -->
+    <div class="checkout-grid">
+
+        <!-- LEFT: contenido de cada paso -->
+        <div class="checkout-main">
+
+            <!-- ── PASO 1: CARRITO ── -->
+            <div class="step-content active" id="content-1">
+                <div class="panel">
+                    <p class="panel-title">Tu Carrito</p>
+                    <div id="cart-items-container"></div>
+                </div>
+                <button class="btn-primary" id="btn-continuar-1">Continuar</button>
+            </div>
+
+            <!-- ── PASO 2: DATOS ── -->
+            <div class="step-content" id="content-2">
+                <div class="panel">
+                    <p class="panel-title">Datos de Envío</p>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Nombre</label>
+                            <input class="form-input" id="d-nombre" type="text" placeholder="Juan">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Apellidos</label>
+                            <input class="form-input" id="d-apellidos" type="text" placeholder="Pérez">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input class="form-input" id="d-email" type="email" placeholder="juan@ejemplo.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input class="form-input" id="d-tel" type="tel" placeholder="+52 55 1234 5678">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Dirección</label>
+                        <input class="form-input" id="d-dir" type="text" placeholder="Calle y número">
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Ciudad</label>
+                            <input class="form-input" id="d-ciudad" type="text" placeholder="Ciudad de México">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Código Postal</label>
+                            <input class="form-input" id="d-cp" type="text" placeholder="01000">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn-secondary" onclick="goToStep(1)">Atrás</button>
+                    <button class="btn-primary" id="btn-continuar-2" style="margin-top:0;">Continuar</button>
+                </div>
+            </div>
+
+            <!-- ── PASO 3: PAGO ── -->
+            <div class="step-content" id="content-3">
+                <div class="panel">
+                    <p class="panel-title">Información de Pago</p>
+
+                    <div class="form-group">
+                        <label class="form-label">Número de tarjeta</label>
+                        <input class="form-input" id="p-card" type="text" placeholder="1234 5678 9012 3456" maxlength="19">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nombre en la tarjeta</label>
+                        <input class="form-input" id="p-nombre" type="text" placeholder="JUAN PÉREZ" style="text-transform:uppercase;">
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Fecha de expiración</label>
+                            <input class="form-input" id="p-exp" type="text" placeholder="MM/AA" maxlength="5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CVV</label>
+                            <input class="form-input" id="p-cvv" type="text" placeholder="123" maxlength="4">
+                        </div>
+                    </div>
+
+                    <div class="ssl-badge">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        Tu pago está protegido con encriptación SSL
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn-secondary" onclick="goToStep(2)">Atrás</button>
+                    <button class="btn-primary" id="btn-confirmar" style="margin-top:0;">Confirmar Pago</button>
+                </div>
+            </div>
+
+            <!-- ── PASO 4: CONFIRMACIÓN ── -->
+            <div class="step-content" id="content-4">
+                <div class="panel" style="text-align:center; padding: 2.5rem 2rem;">
+                    <div class="confirm-icon">
+                        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+
+                    <h2 class="confirm-title">¡Pedido Confirmado!</h2>
+                    <p class="confirm-order-num" id="confirm-order-num">Número de orden: #DA-2026-0001</p>
+
+                    <div class="confirm-email-box">
+                        Hemos enviado un email de confirmación a:
+                        <strong id="confirm-email">—</strong>
+                    </div>
+
+                    <ul class="confirm-perks">
+                        <li>Recibirás una prueba digital en 24-48 horas</li>
+                        <li>Tiempo de producción: 5-7 días hábiles</li>
+                        <li>Rastreo de envío disponible pronto</li>
+                    </ul>
+
+                    <button class="btn-ver-pedido" onclick="window.location.href='../landing/index.html'">
+                        Ver estado del pedido
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /checkout-main -->
+
+        <!-- RIGHT: Resumen del pedido -->
+        <div class="order-summary" id="order-summary-col">
+            <div class="panel">
+                <p class="summary-title">Resumen del Pedido</p>
+                <div id="summary-lines"></div>
+                <div class="summary-divider"></div>
+                <div class="summary-line">
+                    <span>Subtotal</span>
+                    <span id="summary-subtotal">$0</span>
+                </div>
+                <div class="summary-line">
+                    <span>Envío</span>
+                    <span id="summary-envio">$150</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-total">
+                    <span>Total</span>
+                    <span id="summary-total">$0</span>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /checkout-grid -->
+
+</div><!-- /checkout-wrapper -->
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+/* ════════════════════════════════════════════════════
+   CONSTANTES
+════════════════════════════════════════════════════ */
+const CART_KEY  = 'da_carrito';
+const ENVIO     = 150;
+let currentStep = 1;
+
+/* ════════════════════════════════════════════════════
+   CARRITO — localStorage
+   TODO (con BD): reemplazar getCart/saveCart por
+   fetch GET /api/carrito  y  DELETE /api/carrito/:id
+════════════════════════════════════════════════════ */
+function getCart() {
+    try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+    catch { return []; }
+}
+
+function saveCart(cart) {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    const total = cart.reduce((s, i) => s + i.cantidad, 0);
+    if (typeof window.daUpdateCart === 'function') window.daUpdateCart(total);
+    else sessionStorage.setItem('da_cart_count', total);
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER ITEMS DEL CARRITO
+════════════════════════════════════════════════════ */
+function renderCart() {
+    const cart      = getCart();
+    const container = document.getElementById('cart-items-container');
+    const btnCont   = document.getElementById('btn-continuar-1');
+
+    if (cart.length === 0) {
+        container.innerHTML = `
+            <div class="empty-cart">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+                </svg>
+                <p>Tu carrito está vacío</p>
+                <a href="../landing/catalogo.html">Ver catálogo</a>
+            </div>`;
+        btnCont.disabled = true;
+        renderSummary([]);
+        return;
+    }
+
+    btnCont.disabled = false;
+    container.innerHTML = '';
+
+    cart.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+            <img class="cart-img" src="${item.imagen}" alt="${item.nombre}" loading="lazy">
+            <div class="cart-info">
+                <p class="cart-name">${item.nombre}</p>
+                <p class="cart-price-unit">$${item.precio} MXN / unidad</p>
+                <div class="cart-qty-row">
+                    <span class="cart-qty-label">Cantidad:</span>
+                    <input class="cart-qty-input" type="number" min="1" max="999"
+                           value="${item.cantidad}" data-idx="${idx}">
+                </div>
+            </div>
+            <div class="cart-right">
+                <button class="cart-delete" data-idx="${idx}" aria-label="Eliminar">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14H6L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                        <path d="M9 6V4h6v2"/>
+                    </svg>
+                </button>
+                <span class="cart-subtotal" id="subtotal-${idx}">$${item.precio * item.cantidad}</span>
+            </div>`;
+        container.appendChild(div);
+    });
+
+    /* Eventos: cambiar cantidad */
+    container.querySelectorAll('.cart-qty-input').forEach(input => {
+        input.addEventListener('change', function () {
+            const idx  = +this.dataset.idx;
+            const qty  = Math.max(1, parseInt(this.value) || 1);
+            this.value = qty;
+            const cart = getCart();
+            cart[idx].cantidad = qty;
+            saveCart(cart);
+            document.getElementById(`subtotal-${idx}`).textContent = '$' + (cart[idx].precio * qty);
+            renderSummary(cart);
+        });
+    });
+
+    /* Eventos: eliminar */
+    container.querySelectorAll('.cart-delete').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const idx  = +this.dataset.idx;
+            const cart = getCart();
+            cart.splice(idx, 1);
+            saveCart(cart);
+            renderCart();
+            showToast('Producto eliminado del carrito');
+        });
+    });
+
+    renderSummary(cart);
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER RESUMEN DERECHO
+════════════════════════════════════════════════════ */
+function renderSummary(cart) {
+    const linesEl    = document.getElementById('summary-lines');
+    const subtotalEl = document.getElementById('summary-subtotal');
+    const envioEl    = document.getElementById('summary-envio');
+    const totalEl    = document.getElementById('summary-total');
+
+    if (!cart || cart.length === 0) {
+        linesEl.innerHTML = '<p style="font-size:0.85rem;color:var(--text-muted);">Sin productos</p>';
+        subtotalEl.textContent = '$0';
+        totalEl.textContent    = '$0';
+        return;
+    }
+
+    let subtotal = 0;
+    linesEl.innerHTML = cart.map(item => {
+        const lineSub = item.precio * item.cantidad;
+        subtotal += lineSub;
+        return `<div class="summary-line">
+            <span>${item.nombre} x${item.cantidad}</span>
+            <span>$${lineSub}</span>
+        </div>`;
+    }).join('');
+
+    const total = subtotal + ENVIO;
+    subtotalEl.textContent = '$' + subtotal.toLocaleString();
+    envioEl.textContent    = '$' + ENVIO;
+    totalEl.textContent    = '$' + total.toLocaleString();
+}
+
+/* ════════════════════════════════════════════════════
+   STEPPER — navegar entre pasos
+════════════════════════════════════════════════════ */
+function goToStep(n) {
+    /* Ocultar contenido actual */
+    document.getElementById('content-' + currentStep).classList.remove('active');
+
+    /* Marcar pasos anteriores como "done" */
+    for (let i = 1; i <= 4; i++) {
+        const dot  = document.getElementById('step-dot-' + i);
+        const circ = document.getElementById('step-circle-' + i);
+        dot.classList.remove('active', 'done');
+
+        if (i < n) {
+            dot.classList.add('done');
+            circ.innerHTML = `
+                <svg fill="none" stroke="currentColor" stroke-width="2.5"
+                     viewBox="0 0 24 24" style="width:18px;height:18px;">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>`;
+        } else if (i === n) {
+            dot.classList.add('active');
+            circ.textContent = i;
+        } else {
+            circ.textContent = i;
+        }
+
+        /* Línea entre pasos */
+        if (i < 4) {
+            const line = document.getElementById('line-' + i);
+            line.classList.toggle('done', i < n);
+        }
+    }
+
+    currentStep = n;
+    document.getElementById('content-' + n).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ════════════════════════════════════════════════════
+   VALIDACIONES
+════════════════════════════════════════════════════ */
+function validateDatos() {
+    const campos = [
+        { id: 'd-nombre',    label: 'Nombre' },
+        { id: 'd-apellidos', label: 'Apellidos' },
+        { id: 'd-email',     label: 'Email' },
+        { id: 'd-tel',       label: 'Teléfono' },
+        { id: 'd-dir',       label: 'Dirección' },
+        { id: 'd-ciudad',    label: 'Ciudad' },
+        { id: 'd-cp',        label: 'Código Postal' },
+    ];
+    let ok = true;
+    campos.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (!el.value.trim()) {
+            el.classList.add('error');
+            ok = false;
+        } else {
+            el.classList.remove('error');
+        }
+    });
+    if (!ok) showToast('⚠ Completa todos los campos');
+    return ok;
+}
+
+function validatePago() {
+    const campos = [
+        { id: 'p-card',   label: 'Número de tarjeta' },
+        { id: 'p-nombre', label: 'Nombre en tarjeta' },
+        { id: 'p-exp',    label: 'Expiración' },
+        { id: 'p-cvv',    label: 'CVV' },
+    ];
+    let ok = true;
+    campos.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (!el.value.trim()) {
+            el.classList.add('error');
+            ok = false;
+        } else {
+            el.classList.remove('error');
+        }
+    });
+    if (!ok) showToast('⚠ Completa los datos de pago');
+    return ok;
+}
+
+/* ════════════════════════════════════════════════════
+   EVENTOS PRINCIPALES
+════════════════════════════════════════════════════ */
+document.getElementById('btn-continuar-1').addEventListener('click', () => {
+    const cart = getCart();
+    if (cart.length === 0) { showToast('⚠ Tu carrito está vacío'); return; }
+    goToStep(2);
+});
+
+document.getElementById('btn-continuar-2').addEventListener('click', () => {
+    if (validateDatos()) goToStep(3);
+});
+
+document.getElementById('btn-confirmar').addEventListener('click', () => {
+    if (!validatePago()) return;
+
+    /* Genera número de orden ficticio
+       TODO (con BD): reemplazar por:
+       const res   = await fetch('/api/pedidos', { method:'POST', ... });
+       const pedido = await res.json();
+       usar pedido.numero y pedido.email en la confirmación
+    */
+    const orderNum = '#DA-2026-' + String(Math.floor(Math.random() * 9000) + 1000);
+    const email    = document.getElementById('d-email').value.trim();
+
+    document.getElementById('confirm-order-num').textContent = 'Número de orden: ' + orderNum;
+    document.getElementById('confirm-email').textContent     = email;
+
+    /* Limpiar carrito */
+    localStorage.removeItem(CART_KEY);
+    if (typeof window.daUpdateCart === 'function') window.daUpdateCart(0);
+    else sessionStorage.setItem('da_cart_count', '0');
+
+    goToStep(4);
+});
+
+/* ════════════════════════════════════════════════════
+   FORMATO AUTOMÁTICO — número de tarjeta y expiración
+════════════════════════════════════════════════════ */
+document.getElementById('p-card').addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 16);
+    this.value = v.replace(/(.{4})/g, '$1 ').trim();
+});
+
+document.getElementById('p-exp').addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '').slice(0, 4);
+    if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+    this.value = v;
+});
+
+/* ════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════ */
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════ */
+renderCart();
+
+/* Sincroniza badge del carrito al cargar */
+const initCart = getCart();
+const initCount = initCart.reduce((s, i) => s + i.cantidad, 0);
+/* navbar.js ya recupera da_cart_count de sessionStorage al cargar,
+   pero aquí forzamos con el valor real del localStorage */
+window.addEventListener('load', () => {
+    if (typeof window.daUpdateCart === 'function') window.daUpdateCart(initCount);
+});
+</script>
+
+</body>
+</html>

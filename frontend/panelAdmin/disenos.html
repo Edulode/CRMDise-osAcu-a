@@ -4,36 +4,896 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Cambia el título por el de cada sección -->
-  <title>Diseños Acuña - Diseños</title>
-
-  <!-- Tailwind CSS (ajusta la ruta según tu estructura) -->
+  <title>Diseños</title>
   <link href="../src/css/output.css" rel="stylesheet" />
 
   <!-- layout.js inyecta sidebar + header.
        data-active debe coincidir con el "page" del enlace:
-       dashboard | pedidos | clientes | disenos | reportes | configuracion | seguridad -->
+       dashboard | pedidos | clientes | disenos | reportes | seguridad -->
   <script src="../src/css/sidebar.js" data-active="disenos" defer></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E2C97E;
+      --gold-pale: #F5EDD6;
+      --navy: #1A2236;
+      --navy-mid: #243047;
+      --bg: #F0F2F5;
+      --card: #FFFFFF;
+      --text: #1A2236;
+      --muted: #7A8499;
+    }
+
+    * {
+      font-family: 'DM Sans', sans-serif;
+      box-sizing: border-box;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* ── KPI cards ── */
+    .kpi-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ── Design cards ── */
+    .design-card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #E8EAEF;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      margin: 6px;
+    }
+
+    .design-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.10);
+    }
+
+    .design-img-wrap {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #F5EDD6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .design-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .design-img-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      gap: 8px;
+    }
+
+    /* ── Event badges ── */
+    .badge-evento {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .ev-boda {
+      background: #FCE7F3;
+      color: #BE185D;
+    }
+
+    .ev-bautizo {
+      background: #DCEEFF;
+      color: #1565C0;
+    }
+
+    .ev-cumpleanos {
+      background: #FFF4CC;
+      color: #A07700;
+    }
+
+    .ev-xv {
+      background: #EDE7FF;
+      color: #5E35B1;
+    }
+
+    /* ── Status badge ── */
+    .badge-activo {
+      background: #D6F5E3;
+      color: #1B7A3E;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 20px;
+    }
+
+    .badge-inactivo {
+      background: #FFE5E5;
+      color: #C62828;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 20px;
+    }
+
+    /* ── Search input ── */
+    .search-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+    }
+
+    /* ── Modal ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 22, 40, 0.55);
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #modal-overlay.open {
+      display: flex;
+    }
+
+    #modal-box {
+      background: #fff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #E0E4EC;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
+    }
+
+    .modal-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+    }
+
+    .modal-select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #E0E4EC;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      background: white;
+      cursor: pointer;
+      box-sizing: border-box;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%236b7280' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px;
+      padding-right: 32px;
+    }
+
+    .modal-select:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    /* ── Image upload area ── */
+    .upload-area {
+      border: 2px dashed #E0E4EC;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-area:hover {
+      border-color: var(--gold);
+      background: #FFFBEB;
+    }
+
+    .upload-area.has-image {
+      border-style: solid;
+      border-color: var(--gold);
+    }
+
+    /* ── Action buttons ── */
+    .action-icon-btn {
+      padding: 6px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #9ca3af;
+    }
+
+    .action-icon-btn.edit:hover {
+      background: #eff6ff;
+      color: #3b82f6;
+    }
+
+    .action-icon-btn.trash:hover {
+      background: #fef2f2;
+      color: #ef4444;
+    }
+
+    .action-icon-btn.toggle:hover {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    /* ── View toggle ── */
+    .view-btn {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #E0E4EC;
+      background: #fff;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .view-btn.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    /* ── List table ── */
+    #tbody-disenos tr {
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    #tbody-disenos tr:last-child {
+      border-bottom: none;
+    }
+
+    #tbody-disenos tr:hover {
+      background: #F7F9FC;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      min-width: 220px;
+    }
+
+    #toast.show {
+      display: flex;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #CBD0DC;
+      border-radius: 4px;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-up {
+      animation: fadeUp 0.3s ease forwards;
+    }
+
+    /* ── Table scroll ── */
+    #view-list .overflow-x-auto {
+      overflow-x: scroll !important;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #view-list table {
+      min-width: 700px;
+    }
+  </style>
 </head>
 
 <body class="bg-slate-100 text-gray-800">
-
-  <!--
-    Todo lo que pongas aquí dentro quedará automáticamente
-    a la DERECHA del sidebar y DEBAJO del header.
-    Usa <main class="flex-1 p-6 space-y-6"> como contenedor raíz.
-  -->
   <main class="flex-1 p-6 space-y-6">
+    <!-- ── KPI Cards ── -->
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <p class="text-xs font-medium mb-1" style="color:var(--muted);">Total Diseños</p>
+        <p class="text-3xl font-bold" style="color:var(--navy);font-family:'Playfair Display',serif;" id="kpi-total">0
+        </p>
+      </div>
+      <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <p class="text-xs font-medium mb-1" style="color:var(--muted);">Activos</p>
+        <p class="text-3xl font-bold" style="color:#1B7A3E;font-family:'Playfair Display',serif;" id="kpi-activos">0
+        </p>
+      </div>
+      <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <p class="text-xs font-medium mb-1" style="color:var(--muted);">Más Pedido</p>
+        <p class="text-base font-bold truncate mt-1" style="color:var(--gold);font-family:'Playfair Display',serif;"
+          id="kpi-popular">—</p>
+      </div>
+      <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <p class="text-xs font-medium mb-1" style="color:var(--muted);">Precio Promedio</p>
+        <p class="text-3xl font-bold" style="color:var(--navy);font-family:'Playfair Display',serif;" id="kpi-precio">
+          $0</p>
+      </div>
+    </div>
 
-    <!-- ═══════════════════════════════════════
-         AQUÍ VA EL CONTENIDO ÚNICO DE LA PÁGINA
-         ═══════════════════════════════════════ -->
+    <!-- ── Toolbar ── -->
+    <div
+      class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
 
-    <p class="text-gray-400">diseños acuña</p>
+      <!-- Fila 1: Search -->
+      <div class="relative flex-1">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs"
+          style="color:var(--muted);"></i>
+        <input id="search-input" oninput="filtrar()" type="text" placeholder="Buscar por nombre o descripción..."
+          class="search-input w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-slate-50 text-gray-700 placeholder-gray-400" />
+      </div>
+
+      <!-- Fila 2: Filtros -->
+      <div class="flex gap-3 sm:contents">
+        <select id="filter-evento" onchange="filtrar()"
+          class="flex-1 sm:flex-none px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white cursor-pointer"
+          style="color:var(--text);">
+          <option value="">Todos los eventos</option>
+          <option value="Boda">Boda</option>
+          <option value="Bautizo">Bautizo</option>
+          <option value="Cumpleaños">Cumpleaños</option>
+          <option value="XV Años">XV Años</option>
+        </select>
+
+        <select id="filter-estado" onchange="filtrar()"
+          class="flex-1 sm:flex-none px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white cursor-pointer"
+          style="color:var(--text);">
+          <option value="">Todos los estados</option>
+          <option value="Activo">Activo</option>
+          <option value="Inactivo">Inactivo</option>
+        </select>
+      </div>
+
+      <!-- Fila 3: Toggle + Botón -->
+      <div class="flex items-center justify-between sm:contents gap-3">
+        <div class="flex gap-1">
+          <button id="btn-grid" class="view-btn active" onclick="setView('grid')" title="Vista tarjetas">
+            <i class="fa-solid fa-grip text-xs"></i>
+          </button>
+          <button id="btn-list" class="view-btn" onclick="setView('list')" title="Vista lista">
+            <i class="fa-solid fa-list text-xs"></i>
+          </button>
+        </div>
+
+        <button onclick="abrirModal()"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition whitespace-nowrap hover:opacity-90"
+          style="background:var(--gold);color:var(--navy);">
+          <i class="fa-solid fa-plus"></i> Nuevo Diseño
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ── GRID VIEW ── -->
+    <div id="view-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 px-2 py-2 fade-up">
+    </div>
+
+    <!-- ── LIST VIEW ── -->
+    <div id="view-list" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden fade-up">
+      <div class="overflow-x-auto -webkit-overflow-scrolling-touch">
+        <table class="w-full text-sm" style="min-width: 700px;">
+          <thead>
+            <tr class="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+              <th class="px-6 py-3 text-left font-medium">Diseño</th>
+              <th class="px-4 py-3 text-left font-medium">Descripción</th>
+              <th class="px-4 py-3 text-left font-medium">Evento</th>
+              <th class="px-4 py-3 text-left font-medium">Color</th>
+              <th class="px-4 py-3 text-left font-medium">Precio</th>
+              <th class="px-4 py-3 text-left font-medium">Estado</th>
+              <th class="px-4 py-3 text-center font-medium">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-disenos"></tbody>
+        </table>
+      </div>
+      <div id="list-empty" class="hidden flex-col items-center justify-center py-16">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-3" style="background:var(--gold-pale);">
+          <i class="fa-solid fa-palette text-xl" style="color:var(--gold);"></i>
+        </div>
+        <p class="font-semibold" style="color:var(--navy);">Sin diseños</p>
+        <p class="text-xs mt-1" style="color:var(--muted);">No hay diseños que coincidan con los filtros.</p>
+      </div>
+    </div>
+
+    <!-- Empty grid state -->
+    <div id="grid-empty" class="hidden flex-col items-center justify-center py-20">
+      <div class="w-16 h-16 rounded-full flex items-center justify-center mb-4" style="background:var(--gold-pale);">
+        <i class="fa-solid fa-palette text-2xl" style="color:var(--gold);"></i>
+      </div>
+      <p class="font-semibold text-lg" style="color:var(--navy);">Sin diseños</p>
+      <p class="text-sm mt-1" style="color:var(--muted);">No hay diseños que coincidan con los filtros.</p>
+    </div>
 
   </main>
 
+  <!-- ══ MODAL: Nuevo / Editar Diseño ══ -->
+  <div id="modal-overlay" onclick="cerrarModalOverlay(event)">
+    <div id="modal-box">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+        <h3 class="text-lg font-semibold" style="color:var(--navy);" id="modal-title">Nuevo Diseño</h3>
+        <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 transition">
+          <i class="fa-solid fa-xmark w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-6 py-5 space-y-4">
+        <input type="hidden" id="modal-idx" value="" />
+
+        <!-- Image upload -->
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color:var(--navy);">Imagen del diseño</label>
+          <div class="upload-area" id="upload-area" onclick="document.getElementById('img-input').click()">
+            <div id="upload-placeholder">
+              <i class="fa-solid fa-cloud-arrow-up text-2xl mb-2" style="color:var(--gold);"></i>
+              <p class="text-sm font-medium" style="color:var(--navy);">Haz clic para subir imagen</p>
+              <p class="text-xs mt-1" style="color:var(--muted);">PNG, JPG o WEBP · Máx. 5 MB</p>
+            </div>
+            <img id="upload-preview" src="" alt="" class="hidden max-h-40 mx-auto rounded-lg object-cover" />
+          </div>
+          <input type="file" id="img-input" accept="image/*" class="hidden" onchange="previewImg(event)" />
+        </div>
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color:var(--navy);">Nombre del diseño *</label>
+          <input id="m-nombre" type="text" placeholder="Ej. Elegance Floral" class="modal-input" />
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color:var(--navy);">Descripción</label>
+          <textarea id="m-descripcion" rows="2" placeholder="Breve descripción del diseño..."
+            class="modal-input resize-none"></textarea>
+        </div>
+
+        <!-- Evento + Precio -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color:var(--navy);">Tipo de evento *</label>
+            <select id="m-evento" class="modal-select">
+              <option value="">Seleccionar…</option>
+              <option value="Boda">Boda</option>
+              <option value="Bautizo">Bautizo</option>
+              <option value="Cumpleaños">Cumpleaños</option>
+              <option value="XV Años">XV Años</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1" style="color:var(--navy);">Precio base ($) *</label>
+            <input id="m-precio" type="number" min="0" step="0.01" placeholder="850.00" class="modal-input" />
+          </div>
+        </div>
+
+        <!-- Color principal -->
+        <div>
+          <label class="block text-sm font-medium mb-1" style="color:var(--navy);">Color principal</label>
+          <div class="flex gap-2 items-center">
+            <input id="m-color-picker" type="color" value="#C9A84C" class="w-10 h-10 rounded-lg border cursor-pointer"
+              style="border-color:#E0E4EC;padding:2px;" />
+            <input id="m-color-text" type="text" value="#C9A84C" placeholder="#C9A84C" class="modal-input flex-1" />
+          </div>
+        </div>
+
+        <!-- Estado (solo editar) -->
+        <div id="field-estado" style="display:none;">
+          <label class="block text-sm font-medium mb-1" style="color:var(--navy);">Estado</label>
+          <select id="m-estado" class="modal-select">
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        </div>
+
+        <!-- Error -->
+        <div id="modal-error" class="hidden text-xs rounded-lg px-4 py-2" style="background:#FFE5E5;color:#C62828;">
+          Por favor completa los campos obligatorios.
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100">
+        <button onclick="cerrarModal()"
+          class="px-5 py-2.5 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-100 transition"
+          style="color:var(--muted);">
+          Cancelar
+        </button>
+        <button onclick="guardarDiseno()" id="btn-guardar"
+          class="px-5 py-2.5 text-sm font-semibold rounded-lg transition hover:opacity-90"
+          style="background:var(--gold);color:var(--navy);">
+          Crear Diseño
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ══ -->
+  <div id="toast">
+    <i class="fa-solid fa-check-circle" style="color:var(--gold);"></i>
+    <span id="toast-msg">Acción realizada</span>
+  </div>
+
+  <script>
+    /* ── Datos simulados ── */
+    let disenosData = [
+      { id: 'DIS-001', nombre: 'Elegance Floral', descripcion: 'Diseño romántico con flores acuarela en tonos rosados.', evento: 'Boda', precio: 1280, color: '#D4AACF', imagen: '', estado: 'Activo', pedidos: 24 },
+      { id: 'DIS-002', nombre: 'Angelitos Dorados', descripcion: 'Motivos angelicales con detalles en dorado brillante.', evento: 'Bautizo', precio: 890, color: '#AEE6F3', imagen: '', estado: 'Activo', pedidos: 18 },
+      { id: 'DIS-003', nombre: 'Confetti Party', descripcion: 'Diseño festivo y colorido para cumpleaños modernos.', evento: 'Cumpleaños', precio: 650, color: '#FFD966', imagen: '', estado: 'Activo', pedidos: 15 },
+      { id: 'DIS-004', nombre: 'Rosa Vintage', descripcion: 'Estilo vintage con rosas y tipografía clásica.', evento: 'XV Años', precio: 1050, color: '#F4A7B9', imagen: '', estado: 'Activo', pedidos: 21 },
+      { id: 'DIS-005', nombre: 'Rustic Greenery', descripcion: 'Hojas y ramas en estilo rústico natural.', evento: 'Boda', precio: 1400, color: '#A8D5A2', imagen: '', estado: 'Activo', pedidos: 19 },
+      { id: 'DIS-006', nombre: 'Gold Luxe', descripcion: 'Diseño de lujo con detalles dorados y tipografía serif.', evento: 'Boda', precio: 1850, color: '#C9A84C', imagen: '', estado: 'Activo', pedidos: 30 },
+      { id: 'DIS-007', nombre: 'Nubes & Estrellas', descripcion: 'Ilustraciones infantiles con nubes y estrellas.', evento: 'Bautizo', precio: 720, color: '#B3D4FF', imagen: '', estado: 'Inactivo', pedidos: 8 },
+      { id: 'DIS-008', nombre: 'Princesa Lila', descripcion: 'Corona y detalles en lila para quinceañeras.', evento: 'XV Años', precio: 980, color: '#CBA6F7', imagen: '', estado: 'Activo', pedidos: 12 },
+    ];
+
+    const EV_CLASS = { 'Boda': 'ev-boda', 'Bautizo': 'ev-bautizo', 'Cumpleaños': 'ev-cumpleanos', 'XV Años': 'ev-xv' };
+    const EV_ICON = { 'Boda': 'fa-heart', 'Bautizo': 'fa-baby', 'Cumpleaños': 'fa-cake-candles', 'XV Años': 'fa-crown' };
+    let vistaActual = 'grid';
+
+    /* ── Filtered data ── */
+    function filtered() {
+      const q = document.getElementById('search-input').value.toLowerCase().trim();
+      const ev = document.getElementById('filter-evento').value;
+      const es = document.getElementById('filter-estado').value;
+      return disenosData.filter(d =>
+        (!q || d.nombre.toLowerCase().includes(q) || d.descripcion.toLowerCase().includes(q)) &&
+        (!ev || d.evento === ev) &&
+        (!es || d.estado === es)
+      );
+    }
+
+    /* ── KPIs ── */
+    function renderKPIs() {
+      document.getElementById('kpi-total').textContent = disenosData.length;
+      document.getElementById('kpi-activos').textContent = disenosData.filter(d => d.estado === 'Activo').length;
+      const masP = disenosData.reduce((a, b) => b.pedidos > a.pedidos ? b : a, disenosData[0]);
+      document.getElementById('kpi-popular').textContent = masP ? masP.nombre : '—';
+      const avg = disenosData.length ? (disenosData.reduce((s, d) => s + d.precio, 0) / disenosData.length) : 0;
+      document.getElementById('kpi-precio').textContent = '$' + Math.round(avg).toLocaleString();
+    }
+
+    /* ── Image placeholder ── */
+    function imgPlaceholder(d) {
+      return `<div class="design-img-placeholder">
+        <i class="fa-solid fa-palette text-3xl" style="color:var(--gold);opacity:0.6;"></i>
+        <span class="text-xs" style="color:var(--muted);">Sin imagen</span>
+      </div>`;
+    }
+
+    /* ── Render GRID ── */
+    function renderGrid(data) {
+      const wrap = document.getElementById('view-grid');
+      const empty = document.getElementById('grid-empty');
+      if (data.length === 0) {
+        wrap.innerHTML = '';
+        empty.classList.remove('hidden'); empty.classList.add('flex');
+        return;
+      }
+      empty.classList.add('hidden'); empty.classList.remove('flex');
+      wrap.innerHTML = data.map((d, _) => {
+        const realIdx = disenosData.indexOf(d);
+        return `
+        <div class="design-card fade-up">
+          <div class="design-img-wrap">
+            ${d.imagen
+            ? `<img src="${d.imagen}" alt="${d.nombre}" />`
+            : imgPlaceholder(d)}
+            <!-- color dot overlay -->
+            <div style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:${d.color};border:2px solid rgba(255,255,255,0.8);box-shadow:0 2px 6px rgba(0,0,0,0.15);"></div>
+            <!-- estado badge -->
+            <div style="position:absolute;top:10px;left:10px;">
+              <span class="badge-${d.estado.toLowerCase()}">${d.estado}</span>
+            </div>
+          </div>
+          <div class="p-4 flex flex-col flex-1 gap-2">
+            <div class="flex items-start justify-between gap-2">
+              <p class="font-semibold text-sm leading-tight" style="color:var(--navy);">${d.nombre}</p>
+              <span class="badge-evento ${EV_CLASS[d.evento]} shrink-0">
+                <i class="fa-solid ${EV_ICON[d.evento]} text-[9px]"></i> ${d.evento}
+              </span>
+            </div>
+            <p class="text-xs leading-relaxed line-clamp-2" style="color:var(--muted);">${d.descripcion || '—'}</p>
+            <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-100">
+              <p class="font-bold text-base" style="color:var(--navy);">$${d.precio.toLocaleString()}</p>
+              <div class="flex gap-1">
+                <button class="action-icon-btn edit" onclick="abrirModal(${realIdx})" title="Editar">
+                  <i class="fa-solid fa-pen-to-square text-xs"></i>
+                </button>
+                <button class="action-icon-btn toggle" onclick="toggleEstado(${realIdx})" title="${d.estado === 'Activo' ? 'Desactivar' : 'Activar'}">
+                  <i class="fa-solid ${d.estado === 'Activo' ? 'fa-toggle-on' : 'fa-toggle-off'} text-xs"></i>
+                </button>
+                <button class="action-icon-btn trash" onclick="eliminarDiseno(${realIdx})" title="Eliminar">
+                  <i class="fa-solid fa-trash text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    /* ── Render LIST ── */
+    function renderList(data) {
+      const tbody = document.getElementById('tbody-disenos');
+      const empty = document.getElementById('list-empty');
+      if (data.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden'); empty.classList.add('flex');
+        return;
+      }
+      empty.classList.add('hidden'); empty.classList.remove('flex');
+      tbody.innerHTML = data.map(d => {
+        const realIdx = disenosData.indexOf(d);
+        return `<tr>
+          <td class="px-6 py-3.5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" style="background:var(--gold-pale);">
+                ${d.imagen ? `<img src="${d.imagen}" class="w-full h-full object-cover" />` : `<i class="fa-solid fa-palette text-sm" style="color:var(--gold);"></i>`}
+              </div>
+              <div>
+                <p class="font-semibold text-sm" style="color:var(--navy);">${d.nombre}</p>
+                <p class="text-xs" style="color:var(--muted);">${d.id}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3.5 text-xs max-w-[200px]" style="color:var(--muted);">${d.descripcion || '—'}</td>
+          <td class="px-4 py-3.5">
+            <span class="badge-evento ${EV_CLASS[d.evento]}">
+              <i class="fa-solid ${EV_ICON[d.evento]} text-[9px]"></i> ${d.evento}
+            </span>
+          </td>
+          <td class="px-4 py-3.5">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full border inline-block" style="background:${d.color};border-color:rgba(0,0,0,0.1);"></span>
+              <span class="text-xs" style="color:var(--muted);">${d.color}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3.5 font-semibold text-sm" style="color:var(--navy);">$${d.precio.toLocaleString()}</td>
+          <td class="px-4 py-3.5">
+            <span class="badge-${d.estado.toLowerCase()}">${d.estado}</span>
+          </td>
+          <td class="px-4 py-3.5">
+            <div class="flex items-center justify-center gap-1">
+              <button class="action-icon-btn edit" onclick="abrirModal(${realIdx})" title="Editar">
+                <i class="fa-solid fa-pen-to-square text-xs"></i>
+              </button>
+              <button class="action-icon-btn toggle" onclick="toggleEstado(${realIdx})" title="${d.estado === 'Activo' ? 'Desactivar' : 'Activar'}">
+                <i class="fa-solid ${d.estado === 'Activo' ? 'fa-toggle-on' : 'fa-toggle-off'} text-xs"></i>
+              </button>
+              <button class="action-icon-btn trash" onclick="eliminarDiseno(${realIdx})" title="Eliminar">
+                <i class="fa-solid fa-trash text-xs"></i>
+              </button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    /* ── Main render ── */
+    function render() {
+      const data = filtered();
+      renderKPIs();
+      if (vistaActual === 'grid') renderGrid(data);
+      else renderList(data);
+    }
+
+    function filtrar() { render(); }
+
+    /* ── View toggle ── */
+    function setView(v) {
+      vistaActual = v;
+      document.getElementById('view-grid').classList.toggle('hidden', v !== 'grid');
+      document.getElementById('view-list').classList.toggle('hidden', v !== 'list');
+      document.getElementById('btn-grid').classList.toggle('active', v === 'grid');
+      document.getElementById('btn-list').classList.toggle('active', v === 'list');
+      render();
+    }
+
+    /* ── Image preview ── */
+    function previewImg(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const prev = document.getElementById('upload-preview');
+        const ph = document.getElementById('upload-placeholder');
+        prev.src = ev.target.result;
+        prev.classList.remove('hidden');
+        ph.classList.add('hidden');
+        document.getElementById('upload-area').classList.add('has-image');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /* ── Modal ── */
+    function abrirModal(idx = null) {
+      const esEditar = idx !== null;
+      document.getElementById('modal-idx').value = esEditar ? idx : '';
+      document.getElementById('modal-title').textContent = esEditar ? 'Editar Diseño' : 'Nuevo Diseño';
+      document.getElementById('btn-guardar').textContent = esEditar ? 'Guardar Cambios' : 'Crear Diseño';
+      document.getElementById('field-estado').style.display = esEditar ? '' : 'none';
+      document.getElementById('modal-error').classList.add('hidden');
+
+      // reset image
+      document.getElementById('upload-preview').classList.add('hidden');
+      document.getElementById('upload-placeholder').classList.remove('hidden');
+      document.getElementById('upload-area').classList.remove('has-image');
+      document.getElementById('img-input').value = '';
+
+      if (esEditar) {
+        const d = disenosData[idx];
+        document.getElementById('m-nombre').value = d.nombre;
+        document.getElementById('m-descripcion').value = d.descripcion;
+        document.getElementById('m-evento').value = d.evento;
+        document.getElementById('m-precio').value = d.precio;
+        document.getElementById('m-color-text').value = d.color;
+        document.getElementById('m-color-picker').value = d.color;
+        document.getElementById('m-estado').value = d.estado;
+        if (d.imagen) {
+          document.getElementById('upload-preview').src = d.imagen;
+          document.getElementById('upload-preview').classList.remove('hidden');
+          document.getElementById('upload-placeholder').classList.add('hidden');
+          document.getElementById('upload-area').classList.add('has-image');
+        }
+      } else {
+        document.getElementById('m-nombre').value = '';
+        document.getElementById('m-descripcion').value = '';
+        document.getElementById('m-evento').value = '';
+        document.getElementById('m-precio').value = '';
+        document.getElementById('m-color-text').value = '#C9A84C';
+        document.getElementById('m-color-picker').value = '#C9A84C';
+      }
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+    function cerrarModalOverlay(e) {
+      if (e.target === document.getElementById('modal-overlay')) cerrarModal();
+    }
+
+    function guardarDiseno() {
+      const nombre = document.getElementById('m-nombre').value.trim();
+      const evento = document.getElementById('m-evento').value;
+      const precio = parseFloat(document.getElementById('m-precio').value) || 0;
+      const color = document.getElementById('m-color-text').value || '#C9A84C';
+      const desc = document.getElementById('m-descripcion').value.trim();
+      const idx = document.getElementById('modal-idx').value;
+      const esEditar = idx !== '';
+
+      if (!nombre || !evento || !precio) {
+        document.getElementById('modal-error').classList.remove('hidden');
+        return;
+      }
+
+      // get image if uploaded
+      const prev = document.getElementById('upload-preview');
+      const imagen = prev.classList.contains('hidden') ? '' : prev.src;
+
+      if (esEditar) {
+        const estado = document.getElementById('m-estado').value;
+        disenosData[parseInt(idx)] = { ...disenosData[parseInt(idx)], nombre, descripcion: desc, evento, precio, color, imagen, estado };
+        showToast('Diseño actualizado correctamente');
+      } else {
+        const count = disenosData.length + 1;
+        disenosData.unshift({ id: `DIS-${String(count).padStart(3, '0')}`, nombre, descripcion: desc, evento, precio, color, imagen, estado: 'Activo', pedidos: 0 });
+        showToast('Diseño creado exitosamente');
+      }
+
+      cerrarModal();
+      render();
+    }
+
+    /* ── Toggle estado ── */
+    function toggleEstado(idx) {
+      const d = disenosData[idx];
+      d.estado = d.estado === 'Activo' ? 'Inactivo' : 'Activo';
+      showToast(`Diseño ${d.estado === 'Activo' ? 'activado' : 'desactivado'}`);
+      render();
+    }
+
+    /* ── Eliminar ── */
+    function eliminarDiseno(idx) {
+      const d = disenosData[idx];
+      if (confirm(`¿Eliminar el diseño "${d.nombre}"?`)) {
+        disenosData.splice(idx, 1);
+        showToast('Diseño eliminado');
+        render();
+      }
+    }
+
+    /* ── Toast ── */
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    /* ── Color sync ── */
+    document.getElementById('m-color-picker').addEventListener('input', function () {
+      document.getElementById('m-color-text').value = this.value;
+    });
+    document.getElementById('m-color-text').addEventListener('input', function () {
+      if (/^#[0-9A-Fa-f]{6}$/.test(this.value))
+        document.getElementById('m-color-picker').value = this.value;
+    });
+
+    /* ── Init ── */
+    render();
+  </script>
 </body>
 
 </html>

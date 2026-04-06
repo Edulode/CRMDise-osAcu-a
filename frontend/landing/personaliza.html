@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personaliza</title>
+    <script src="../src/css/navbar.js" defer></script>
+    <link href="../src/css/output.css" rel="stylesheet">
+    <script src="../src/css/footer.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lora:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #B8962E;
+            --gold-light: #C9A84C;
+            --dark: #1a1a2e;
+            --text-muted: #666;
+            --bg: #f5f4f0;
+            --white: #ffffff;
+            --border: #e4e1d8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--dark);
+        }
+
+        /* ── BREADCRUMB ── */
+        .breadcrumb {
+            padding: 1rem 4rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 0.4rem;
+            align-items: center;
+        }
+        .breadcrumb a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .breadcrumb a:hover { color: var(--dark); }
+        .breadcrumb span { color: var(--dark); font-weight: 500; }
+
+        /* ── MAIN LAYOUT ── */
+        .product-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            padding: 0 4rem 4rem;
+            align-items: start;
+        }
+
+        /* ── LEFT: GALLERY ── */
+        .gallery-main {
+            width: 100%;
+            aspect-ratio: 4/3;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            background: #e0ddd6;
+        }
+
+        .gallery-main img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-thumbs {
+            display: flex;
+            gap: 0.7rem;
+        }
+
+        .thumb {
+            width: 80px;
+            height: 70px;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .thumb.active,
+        .thumb:hover {
+            border-color: var(--gold);
+        }
+
+        /* ── RIGHT: INFO + FORM ── */
+        .product-tag-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .tag {
+            background: rgba(184,150,46,0.12);
+            color: var(--gold);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        .rating .stars { color: var(--gold); }
+
+        .product-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 0.8rem;
+            line-height: 1.15;
+        }
+
+        .product-desc {
+            font-size: 0.97rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.4rem 0;
+        }
+
+        .product-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.2rem;
+        }
+
+        .product-price sub {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            vertical-align: baseline;
+            margin-left: 4px;
+        }
+
+        /* Quantity */
+        .form-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: fit-content;
+            overflow: hidden;
+            background: var(--white);
+        }
+
+        .qty-btn {
+            background: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .qty-btn:hover { background: var(--bg); }
+
+        .qty-input {
+            width: 50px;
+            height: 40px;
+            text-align: center;
+            border: none;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--dark);
+            background: var(--white);
+            outline: none;
+        }
+
+        /* Text area */
+        .custom-textarea {
+            width: 100%;
+            min-height: 90px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem;
+            color: var(--dark);
+            background: var(--white);
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .custom-textarea:focus { border-color: var(--gold); }
+
+        /* Input de una línea (reutiliza custom-textarea sin min-height) */
+        .custom-input {
+            width: 100%;
+            height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0 1rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem;
+            color: var(--dark);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .custom-input:focus { border-color: var(--gold); }
+        .custom-input[readonly] { color: var(--text-muted); cursor: default; }
+
+        .form-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
+        }
+
+        /* Upload */
+        .upload-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.7rem 1.2rem;
+            background: var(--white);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            color: var(--dark);
+            cursor: pointer;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .upload-btn:hover { border-color: var(--gold); }
+        #file-input { display: none; }
+
+        /* Color dots */
+        .color-dots {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .color-dot {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.2s, transform 0.18s;
+        }
+        .color-dot:hover { transform: scale(1.1); }
+        .color-dot.active { border-color: var(--dark); }
+
+        /* Price total + CTA */
+        .price-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .price-total-label {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--dark);
+        }
+
+        .price-total-val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .btn-cart {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            background-color: var(--gold);
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 1rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.22s, transform 0.18s;
+            text-decoration: none;
+        }
+        .btn-cart:hover {
+            background-color: var(--gold-light);
+            transform: translateY(-2px);
+        }
+
+        /* Perks */
+        .perks {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .perk {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .perk::before { content: "✓ "; color: var(--gold); font-weight: 700; }
+
+        /* ── REVIEWS ── */
+        .reviews-section {
+            padding: 3rem 4rem 4rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .reviews-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .reviews-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .reviews-summary-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .reviews-summary-badge strong { color: var(--dark); }
+        .reviews-summary-badge .gold-star { color: var(--gold); }
+
+        .review-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.3rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .review-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .reviewer-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--dark);
+        }
+
+        .reviewer-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .review-stars { color: var(--gold); font-size: 1rem; }
+
+        .review-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* ── REVIEW FORM ── */
+        .review-form-section {
+            margin-top: 2rem;
+        }
+
+        .review-form-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1.2rem;
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+        }
+
+        /* Estrellas interactivas */
+        .star-selector {
+            display: flex;
+            gap: 6px;
+        }
+
+        .star-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--border);
+            padding: 0;
+            line-height: 1;
+            transition: color 0.15s, transform 0.15s;
+        }
+        .star-btn.active,
+        .star-btn.hovered { color: var(--gold); }
+        .star-btn:hover { transform: scale(1.15); }
+
+        /* Toast */
+        .review-toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--dark);
+            color: #fff;
+            font-size: 0.85rem;
+            font-family: 'DM Sans', sans-serif;
+            padding: 0.65rem 1.3rem;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 9999;
+        }
+        .review-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── FORM GROUPS ── */
+        .form-group { margin-bottom: 1.2rem; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .breadcrumb { padding: 1rem 1.4rem; }
+
+            .product-layout {
+                grid-template-columns: 1fr;
+                padding: 0 1.4rem 3rem;
+                gap: 1.8rem;
+            }
+
+            .gallery-thumbs { overflow-x: auto; }
+            .thumb { width: 70px; height: 60px; }
+
+            .reviews-section { padding: 2rem 1.4rem 3rem; }
+
+            .form-row-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BREADCRUMB -->
+    <nav class="breadcrumb">
+        <a href="../landing/index.html">Inicio</a> /
+        <a href="../landing/catalogo.html">Catálogo</a> /
+        <span id="bc-name">Producto</span>
+    </nav>
+
+    <!-- ══════════════════════════════
+         PRODUCT DETAIL + PERSONALIZA
+    ══════════════════════════════ -->
+    <div class="product-layout">
+
+        <!-- LEFT: GALLERY -->
+        <div class="gallery">
+            <div class="gallery-main">
+                <img id="main-img" src="" alt="Imagen principal del producto" />
+            </div>
+            <div class="gallery-thumbs" id="thumbs-container"></div>
+        </div>
+
+        <!-- RIGHT: INFO + FORM -->
+        <div class="product-info">
+
+            <!-- Tag + rating -->
+            <div class="product-tag-rating">
+                <span class="tag" id="prod-tag">Bodas</span>
+                <span class="rating">
+                    <span class="stars" id="prod-stars">★★★★★</span>
+                    <span id="prod-rating-val">4.8</span>
+                    (<span id="prod-reviews-count">127</span> reseñas)
+                </span>
+            </div>
+
+            <!-- Title + desc -->
+            <h1 class="product-title" id="prod-name">Elegancia Clásica</h1>
+            <p class="product-desc" id="prod-desc">Invitación elegante con acabados dorados y tipografía clásica.</p>
+
+            <div class="divider"></div>
+
+            <!-- Price -->
+            <p class="product-price">
+                $<span id="prod-price">450</span>
+                <sub>MXN / unidad</sub>
+            </p>
+
+            <div class="divider"></div>
+
+            <!-- Cantidad -->
+            <div class="form-group">
+                <label class="form-label">Cantidad</label>
+                <div class="quantity-control">
+                    <button class="qty-btn" id="qty-minus">−</button>
+                    <input class="qty-input" type="number" id="qty-input" value="1" min="1" max="999">
+                    <button class="qty-btn" id="qty-plus">+</button>
+                </div>
+            </div>
+
+            <!-- Texto personalizado -->
+            <div class="form-group">
+                <label class="form-label">Texto personalizado</label>
+                <textarea class="custom-textarea" id="custom-text" placeholder="Ej: María & Carlos - 15 de Junio, 2026"></textarea>
+                <p class="form-hint">Escribe el texto que deseas incluir en tu invitación</p>
+            </div>
+
+            <!-- Imagen opcional -->
+            <div class="form-group">
+                <label class="form-label">Imagen personalizada (opcional)</label>
+                <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                    Subir imagen
+                </button>
+                <input type="file" id="file-input" accept="image/png, image/jpeg">
+                <p class="form-hint">PNG, JPG hasta 5MB</p>
+            </div>
+
+            <!-- Color principal -->
+            <div class="form-group">
+                <label class="form-label">Color principal</label>
+                <div class="color-dots" id="color-dots">
+                    <div class="color-dot active" style="background:#B8962E" data-color="#B8962E" title="Dorado"></div>
+                    <div class="color-dot" style="background:#1a1a2e" data-color="#1a1a2e" title="Azul oscuro"></div>
+                    <div class="color-dot" style="background:#e87898" data-color="#e87898" title="Rosa"></div>
+                    <div class="color-dot" style="background:#a8c8a0" data-color="#a8c8a0" title="Verde"></div>
+                    <div class="color-dot" style="background:#e8c8b8" data-color="#e8c8b8" title="Melocotón"></div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Precio total + carrito -->
+            <div class="price-total-row">
+                <span class="price-total-label">Precio total:</span>
+                <span class="price-total-val" id="price-total">$450</span>
+            </div>
+
+            <button class="btn-cart" id="btn-cart">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                Agregar al carrito
+            </button>
+
+            <div class="perks">
+                <p class="perk">Envío gratis en pedidos mayores a $2,000</p>
+                <p class="perk">Tiempo de producción: 5-7 días hábiles</p>
+                <p class="perk">Incluye prueba digital antes de imprimir</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         RESEÑAS
+    ══════════════════════════════ -->
+    <section class="reviews-section">
+
+        <!-- Header con promedio -->
+        <div class="reviews-header">
+            <h2 class="reviews-title">Reseñas de clientes</h2>
+            <div class="reviews-summary-badge">
+                <span class="gold-star">★</span>
+                <strong id="avg-rating">4.8</strong>
+                <span>·</span>
+                <span id="total-count">127 reseñas</span>
+            </div>
+        </div>
+
+        <!-- Lista de reseñas -->
+        <div id="reviews-container"></div>
+
+        <div class="divider"></div>
+
+        <!-- ── FORMULARIO NUEVA RESEÑA ── -->
+        <div class="review-form-section">
+            <h3 class="review-form-title">Deja tu reseña</h3>
+
+            <!-- Estrellas -->
+            <div class="form-group">
+                <label class="form-label">Tu calificación</label>
+                <div class="star-selector" id="star-selector">
+                    <button class="star-btn" data-val="1" aria-label="1 estrella">★</button>
+                    <button class="star-btn" data-val="2" aria-label="2 estrellas">★</button>
+                    <button class="star-btn" data-val="3" aria-label="3 estrellas">★</button>
+                    <button class="star-btn" data-val="4" aria-label="4 estrellas">★</button>
+                    <button class="star-btn" data-val="5" aria-label="5 estrellas">★</button>
+                </div>
+                <p class="form-hint" id="star-hint">Selecciona de 1 a 5 estrellas</p>
+            </div>
+
+            <!-- Nombre + Fecha -->
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label class="form-label">Tu nombre</label>
+                    <input class="custom-input" type="text" id="review-name" placeholder="Ej: Laura G.">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha</label>
+                    <input class="custom-input" type="text" id="review-date" readonly>
+                </div>
+            </div>
+
+            <!-- Comentario -->
+            <div class="form-group">
+                <label class="form-label">Tu comentario</label>
+                <textarea class="custom-textarea" id="review-text"
+                    placeholder="Cuéntanos tu experiencia con este producto..."></textarea>
+                <p class="form-hint"><span id="char-count">0</span>/300 caracteres</p>
+            </div>
+
+            <!-- Botón publicar -->
+            <button class="btn-cart" id="btn-submit-review">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Publicar reseña
+            </button>
+        </div>
+
+    </section>
+
+    <!-- Toast de notificación -->
+    <div class="review-toast" id="review-toast"></div>
+
+
+    <script>
+        /* ════════════════════════════════════════
+           ARREGLO DE PRODUCTOS
+           → Mismo arreglo que catalogo.html
+           → Reemplaza con fetch a tu API cuando tengas BD:
+
+           const res     = await fetch('/api/productos/' + idParam);
+           const producto = await res.json();
+        ════════════════════════════════════════ */
+        const productos = [
+            {
+                id: 1,
+                nombre: "Elegancia Clásica",
+                categoria: "Bodas",
+                precio: 450,
+                rating: 4.8,
+                reviewsCount: 127,
+                descripcion: "Invitación elegante con acabados dorados y tipografía clásica. Perfecta para bodas formales y eventos de gala. Incluye sobre y tarjeta de confirmación.",
+                imagenes: [
+                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
+                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=81",
+                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=82",
+                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=83"
+                ],
+                resenas: [
+                    { nombre: "María González", fecha: "15 Feb 2026", estrellas: 5, texto: "¡Absolutamente hermosas! La calidad de impresión superó mis expectativas. Perfectas para nuestra boda." },
+                    { nombre: "Carlos Ramírez", fecha: "10 Feb 2026", estrellas: 5, texto: "Excelente servicio y diseño elegante. Llegaron a tiempo y bien empacadas." },
+                    { nombre: "Ana Martínez",   fecha: "5 Feb 2026",  estrellas: 4, texto: "Muy bonitas, solo el tiempo de entrega fue un poco más de lo esperado pero valió la pena." }
+                ]
+            },
+            {
+                id: 2,
+                nombre: "Moderno Minimalista",
+                categoria: "Bodas",
+                precio: 380,
+                rating: 4.9,
+                reviewsCount: 98,
+                descripcion: "Diseño limpio y moderno con líneas simples y tipografía sans-serif. Ideal para parejas que buscan un estilo contemporáneo y sofisticado.",
+                imagenes: [
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=81",
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=82",
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=83"
+                ],
+                resenas: [
+                    { nombre: "Luis Herrera", fecha: "20 Feb 2026", estrellas: 5, texto: "Increíble diseño, exactamente lo que buscábamos para nuestra boda minimalista." },
+                    { nombre: "Sofía Torres", fecha: "12 Feb 2026", estrellas: 5, texto: "Calidad impecable y entrega rápida. Muy recomendadas." }
+                ]
+            },
+            {
+                id: 3,
+                nombre: "Jardín Florido",
+                categoria: "Bodas",
+                precio: 420,
+                rating: 4.7,
+                reviewsCount: 84,
+                descripcion: "Invitación romántica con motivos florales y paleta de colores cálidos. Perfecta para bodas al aire libre y jardines.",
+                imagenes: [
+                    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80",
+                    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=81",
+                    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=82",
+                    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=83"
+                ],
+                resenas: [
+                    { nombre: "Patricia Luna", fecha: "18 Feb 2026", estrellas: 5, texto: "Las flores son hermosas, quedaron perfectas para mi boda en el jardín." }
+                ]
+            },
+            {
+                id: 4,
+                nombre: "Simpleza Dorada",
+                categoria: "Bautizos",
+                precio: 395,
+                rating: 4.6,
+                reviewsCount: 61,
+                descripcion: "Diseño tierno y elegante con detalles dorados. Perfecta para celebrar la llegada de un nuevo integrante a la familia.",
+                imagenes: [
+                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&q=80",
+                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&q=81",
+                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&q=82",
+                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&q=83"
+                ],
+                resenas: [
+                    { nombre: "Gabriela Ramos", fecha: "22 Feb 2026", estrellas: 5, texto: "Preciosas para el bautizo de mi bebé, todos preguntaron dónde las conseguí." }
+                ]
+            },
+            {
+                id: 5,
+                nombre: "Romance Eterno",
+                categoria: "Bodas",
+                precio: 480,
+                rating: 5.0,
+                reviewsCount: 43,
+                descripcion: "La invitación más romántica de nuestra colección. Acabados en papel texturizado con caligrafía artesanal.",
+                imagenes: [
+                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
+                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=81",
+                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=82",
+                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=83"
+                ],
+                resenas: [
+                    { nombre: "Valeria Mora", fecha: "25 Feb 2026", estrellas: 5, texto: "Perfectas en todo sentido. Vale cada peso." }
+                ]
+            },
+            {
+                id: 6,
+                nombre: "Fiesta Vibrante",
+                categoria: "Cumpleaños",
+                precio: 350,
+                rating: 4.5,
+                reviewsCount: 72,
+                descripcion: "Colores brillantes y diseño festivo para hacer de tu cumpleaños una celebración memorable desde la primera impresión.",
+                imagenes: [
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=81",
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=82",
+                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=83"
+                ],
+                resenas: [
+                    { nombre: "Jorge Núñez", fecha: "8 Feb 2026", estrellas: 4, texto: "Muy coloridas y alegres, exactas para el cumpleaños de mi hija." }
+                ]
+            }
+        ];
+
+        /* ════════════════════════════════════════
+           CARGAR PRODUCTO SEGÚN ?id= en la URL
+        ════════════════════════════════════════ */
+        function getQueryParam(key) {
+            return new URLSearchParams(window.location.search).get(key);
+        }
+
+        const idParam  = parseInt(getQueryParam('id')) || 1;
+        const producto = productos.find(p => p.id === idParam) || productos[0];
+
+        /* ── Llenar info ── */
+        document.getElementById('bc-name').textContent            = producto.nombre;
+        document.getElementById('prod-name').textContent          = producto.nombre;
+        document.getElementById('prod-tag').textContent           = producto.categoria;
+        document.getElementById('prod-desc').textContent          = producto.descripcion;
+        document.getElementById('prod-price').textContent         = producto.precio;
+        document.getElementById('prod-rating-val').textContent    = producto.rating.toFixed(1);
+        document.getElementById('prod-reviews-count').textContent = producto.reviewsCount;
+        document.title = producto.nombre + ' | Diseños Acuña';
+
+        /* Estrellas del header */
+        const fullStars = Math.floor(producto.rating);
+        const hasHalf   = producto.rating % 1 >= 0.5;
+        document.getElementById('prod-stars').textContent =
+            '★'.repeat(fullStars) + (hasHalf ? '½' : '') + '☆'.repeat(5 - fullStars - (hasHalf ? 1 : 0));
+
+        /* Precio total inicial */
+        document.getElementById('price-total').textContent = '$' + producto.precio;
+
+        /* ── Galería ── */
+        const mainImg = document.getElementById('main-img');
+        mainImg.src   = producto.imagenes[0];
+        mainImg.alt   = producto.nombre;
+
+        const thumbsContainer = document.getElementById('thumbs-container');
+        producto.imagenes.forEach((src, i) => {
+            const div = document.createElement('div');
+            div.className = 'thumb' + (i === 0 ? ' active' : '');
+            div.innerHTML = `<img src="${src}" alt="Vista ${i + 1} de ${producto.nombre}" loading="lazy">`;
+            div.addEventListener('click', () => {
+                mainImg.style.opacity = '0';
+                setTimeout(() => {
+                    mainImg.src = src;
+                    mainImg.style.opacity = '1';
+                }, 200);
+                document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+                div.classList.add('active');
+            });
+            thumbsContainer.appendChild(div);
+        });
+
+        /* ════════════════════════════════════════
+           RESEÑAS — renderizado inicial
+
+           TODO (con BD): reemplazar el arreglo local por:
+           const res    = await fetch('/api/resenas?productoId=' + producto.id);
+           const resenas = await res.json();
+           renderReviews(resenas);
+        ════════════════════════════════════════ */
+        let totalReviews = producto.reviewsCount;
+        let totalRating  = producto.reviewsCount * producto.rating;
+
+        /* Inicializa el badge de promedio */
+        document.getElementById('avg-rating').textContent = producto.rating.toFixed(1);
+        document.getElementById('total-count').textContent = totalReviews + ' reseñas';
+
+        function renderReviews(resenas) {
+            const container = document.getElementById('reviews-container');
+            container.innerHTML = '';
+            resenas.forEach(r => {
+                const stars = '★'.repeat(r.estrellas) + '☆'.repeat(5 - r.estrellas);
+                container.innerHTML += `
+                    <div class="review-card">
+                        <div class="review-top">
+                            <div>
+                                <p class="reviewer-name">${r.nombre}</p>
+                                <p class="reviewer-date">${r.fecha}</p>
+                            </div>
+                            <span class="review-stars">${stars}</span>
+                        </div>
+                        <p class="review-text">${r.texto}</p>
+                    </div>`;
+            });
+        }
+
+        renderReviews(producto.resenas);
+
+        /* ════════════════════════════════════════
+           CANTIDAD → actualiza precio total
+        ════════════════════════════════════════ */
+        const qtyInput = document.getElementById('qty-input');
+        const totalEl  = document.getElementById('price-total');
+
+        function updateTotal() {
+            const qty = Math.max(1, parseInt(qtyInput.value) || 1);
+            qtyInput.value = qty;
+            totalEl.textContent = '$' + (producto.precio * qty);
+        }
+
+        document.getElementById('qty-minus').addEventListener('click', () => {
+            qtyInput.value = Math.max(1, parseInt(qtyInput.value) - 1);
+            updateTotal();
+        });
+
+        document.getElementById('qty-plus').addEventListener('click', () => {
+            qtyInput.value = parseInt(qtyInput.value) + 1;
+            updateTotal();
+        });
+
+        qtyInput.addEventListener('input', updateTotal);
+
+        /* ════════════════════════════════════════
+           COLOR DOTS
+        ════════════════════════════════════════ */
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+            });
+        });
+
+        /* ════════════════════════════════════════
+           UPLOAD – mostrar nombre de archivo
+        ════════════════════════════════════════ */
+        document.getElementById('file-input').addEventListener('change', function () {
+            const btn = document.querySelector('.upload-btn');
+            if (this.files[0]) {
+                btn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    ${this.files[0].name}`;
+            }
+        });
+
+        /* ════════════════════════════════════════
+           CARRITO — localStorage
+           Clave: "da_carrito"  →  Array de items:
+           {
+             id, nombre, categoria, precio,
+             imagen, cantidad,
+             textoPersonalizado, colorSeleccionado
+           }
+
+           TODO (con BD): reemplazar getCart/saveCart por
+           fetch GET/POST a tu endpoint /api/carrito
+        ════════════════════════════════════════ */
+        const CART_KEY = 'da_carrito';
+
+        function getCart() {
+            try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
+            catch { return []; }
+        }
+
+        function saveCart(cart) {
+            localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            /* Actualiza badge de la navbar si la función está disponible */
+            const total = cart.reduce((s, i) => s + i.cantidad, 0);
+            if (typeof window.daUpdateCart === 'function') window.daUpdateCart(total);
+            else sessionStorage.setItem('da_cart_count', total);
+        }
+
+        document.getElementById('btn-cart').addEventListener('click', () => {
+            const qty   = Math.max(1, parseInt(qtyInput.value) || 1);
+            const color = document.querySelector('.color-dot.active')?.dataset.color || '#B8962E';
+            const texto = document.getElementById('custom-text').value.trim();
+
+            const cart = getCart();
+
+            /* Si el mismo producto+color+texto ya está, suma cantidad */
+            const idx = cart.findIndex(i =>
+                i.id === producto.id &&
+                i.colorSeleccionado === color &&
+                i.textoPersonalizado === texto
+            );
+
+            if (idx >= 0) {
+                cart[idx].cantidad += qty;
+            } else {
+                cart.push({
+                    id:                 producto.id,
+                    nombre:             producto.nombre,
+                    categoria:          producto.categoria,
+                    precio:             producto.precio,
+                    imagen:             producto.imagenes[0],
+                    cantidad:           qty,
+                    textoPersonalizado: texto,
+                    colorSeleccionado:  color
+                });
+            }
+
+            saveCart(cart);
+
+            /* Feedback visual con toast de la navbar (si existe) o alert */
+            if (typeof window.daShowToast === 'function') {
+                window.daShowToast('✓ ¡Agregado al carrito!');
+            } else {
+                alert('¡Producto agregado al carrito!\n\nDiseño: ' + producto.nombre +
+                      '\nCantidad: ' + qty + '\nTotal: $' + (producto.precio * qty) + ' MXN');
+            }
+        });
+
+        /* ════════════════════════════════════════
+           FORMULARIO DE NUEVA RESEÑA
+        ════════════════════════════════════════ */
+        let selectedStars = 0;
+        const starLabels  = ['Muy mala', 'Mala', 'Regular', 'Buena', 'Excelente'];
+        const starBtns    = document.querySelectorAll('.star-btn');
+
+        /* Fecha de hoy en el campo readonly */
+        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        const today  = new Date();
+        document.getElementById('review-date').value =
+            `${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
+
+        /* Hover interactivo de estrellas */
+        starBtns.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                const val = +btn.dataset.val;
+                starBtns.forEach(b => b.classList.toggle('hovered', +b.dataset.val <= val));
+            });
+            btn.addEventListener('mouseleave', () => {
+                starBtns.forEach(b => b.classList.remove('hovered'));
+            });
+            btn.addEventListener('click', () => {
+                selectedStars = +btn.dataset.val;
+                starBtns.forEach(b => b.classList.toggle('active', +b.dataset.val <= selectedStars));
+                document.getElementById('star-hint').textContent = starLabels[selectedStars - 1];
+            });
+        });
+
+        /* Contador de caracteres */
+        document.getElementById('review-text').addEventListener('input', function () {
+            if (this.value.length > 300) this.value = this.value.slice(0, 300);
+            document.getElementById('char-count').textContent = this.value.length;
+        });
+
+        /* Publicar reseña */
+        document.getElementById('btn-submit-review').addEventListener('click', () => {
+            const name = document.getElementById('review-name').value.trim();
+            const text = document.getElementById('review-text').value.trim();
+            const date = document.getElementById('review-date').value;
+
+            /* Validaciones */
+            if (!selectedStars)   { showToast('⚠ Selecciona una calificación'); return; }
+            if (!name)            { showToast('⚠ Escribe tu nombre');           return; }
+            if (text.length < 10) { showToast('⚠ El comentario es muy corto'); return; }
+
+            /* ── ILUSIÓN: inserta la tarjeta localmente sin BD ──
+               TODO (con BD): reemplazar este bloque con un fetch POST:
+
+               const response = await fetch('/api/resenas', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({
+                       productoId: producto.id,
+                       nombre:     name,
+                       texto:      text,
+                       estrellas:  selectedStars
+                   })
+               });
+               if (!response.ok) { showToast('⚠ Error al publicar'); return; }
+               const nueva = await response.json();
+               agregarTarjeta(nueva.nombre, nueva.fecha, nueva.estrellas, nueva.texto);
+            ── */
+            agregarTarjeta(name, date, selectedStars, text);
+
+            /* Actualizar promedio en el badge */
+            totalReviews++;
+            totalRating += selectedStars;
+            document.getElementById('avg-rating').textContent  = (totalRating / totalReviews).toFixed(1);
+            document.getElementById('total-count').textContent = totalReviews + ' reseñas';
+            document.getElementById('prod-reviews-count').textContent = totalReviews;
+
+            /* Limpiar formulario */
+            document.getElementById('review-name').value       = '';
+            document.getElementById('review-text').value       = '';
+            document.getElementById('char-count').textContent  = '0';
+            selectedStars = 0;
+            starBtns.forEach(b => b.classList.remove('active'));
+            document.getElementById('star-hint').textContent = 'Selecciona de 1 a 5 estrellas';
+
+            showToast('✓ ¡Reseña publicada con éxito!');
+        });
+
+        /* Crea y anima una tarjeta de reseña nueva al tope de la lista */
+        function agregarTarjeta(nombre, fecha, estrellas, texto) {
+            const stars = '★'.repeat(estrellas) + '☆'.repeat(5 - estrellas);
+            const card  = document.createElement('div');
+            card.className = 'review-card';
+            card.style.cssText = 'opacity:0; transform:translateY(-10px); transition:opacity 0.35s, transform 0.35s;';
+            card.innerHTML = `
+                <div class="review-top">
+                    <div>
+                        <p class="reviewer-name">${escapeHtml(nombre)}</p>
+                        <p class="reviewer-date">${fecha}</p>
+                    </div>
+                    <span class="review-stars">${stars}</span>
+                </div>
+                <p class="review-text">${escapeHtml(texto)}</p>`;
+
+            const container = document.getElementById('reviews-container');
+            container.insertBefore(card, container.firstChild);
+
+            /* Trigger de animación */
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    card.style.opacity   = '1';
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+        }
+
+        /* Sanitiza texto del usuario para evitar XSS */
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g,  '&amp;')
+                .replace(/</g,  '&lt;')
+                .replace(/>/g,  '&gt;')
+                .replace(/"/g,  '&quot;')
+                .replace(/'/g,  '&#039;');
+        }
+
+        /* Toast de notificación */
+        function showToast(msg) {
+            const t = document.getElementById('review-toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+    </script>
+
+</body>
+</html>
