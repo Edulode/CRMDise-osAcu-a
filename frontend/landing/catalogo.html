@@ -146,6 +146,12 @@
             color: var(--text-muted);
         }
 
+        .catalog-status {
+            margin: -0.8rem 0 1rem;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
         /* ── PRODUCT GRID ── */
         .products-grid {
             display: grid;
@@ -414,10 +420,7 @@
         <aside class="sidebar" id="sidebar-desktop">
             <div class="filter-group">
                 <p class="filter-title">Categoría</p>
-                <label class="filter-check"><input type="checkbox" data-filter="cat" value="Bodas"> Bodas</label>
-                <label class="filter-check"><input type="checkbox" data-filter="cat" value="Bautizos"> Bautizos</label>
-                <label class="filter-check"><input type="checkbox" data-filter="cat" value="Cumpleaños"> Cumpleaños</label>
-                <label class="filter-check"><input type="checkbox" data-filter="cat" value="Eventos especiales"> Eventos especiales</label>
+                <div id="category-filters-desktop"></div>
             </div>
 
             <div class="filter-group">
@@ -457,6 +460,8 @@
                 </button>
             </div>
 
+            <p class="catalog-status" id="catalog-status">Cargando catálogo...</p>
+
             <!-- GRID - se construye dinámicamente desde el arreglo -->
             <div class="products-grid" id="products-grid"></div>
 
@@ -485,10 +490,7 @@
 
         <div class="filter-group">
             <p class="filter-title">Categoría</p>
-            <label class="filter-check"><input type="checkbox"> Bodas</label>
-            <label class="filter-check"><input type="checkbox"> Bautizos</label>
-            <label class="filter-check"><input type="checkbox"> Cumpleaños</label>
-            <label class="filter-check"><input type="checkbox"> Eventos especiales</label>
+            <div id="category-filters-mobile"></div>
         </div>
 
         <div class="filter-group">
@@ -518,83 +520,64 @@
     </div>
 
     <script>
-        /* ════════════════════════════════════════
-           ARREGLO DE PRODUCTOS
-           → Reemplaza este arreglo con datos de tu BD
-        ════════════════════════════════════════ */
-        const productos = [
-            {
-                id: 1,
-                nombre: "Elegancia Clásica",
-                categoria: "Bodas",
-                precio: 450,
-                rating: 4.8,
-                imagen: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80"
-            },
-            {
-                id: 2,
-                nombre: "Moderno Minimalista",
-                categoria: "Bodas",
-                precio: 380,
-                rating: 4.9,
-                imagen: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
-            },
-            {
-                id: 3,
-                nombre: "Jardín Florido",
-                categoria: "Bodas",
-                precio: 420,
-                rating: 4.7,
-                imagen: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&q=80"
-            },
-            {
-                id: 4,
-                nombre: "Simpleza Dorada",
-                categoria: "Bautizos",
-                precio: 395,
-                rating: 4.6,
-                imagen: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=600&q=80"
-            },
-            {
-                id: 5,
-                nombre: "Romance Eterno",
-                categoria: "Bodas",
-                precio: 480,
-                rating: 5.0,
-                imagen: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80"
-            },
-            {
-                id: 6,
-                nombre: "Fiesta Vibrante",
-                categoria: "Cumpleaños",
-                precio: 350,
-                rating: 4.5,
-                imagen: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
-            }
-        ];
+        const API_BASE = 'http://localhost:4000/api/catalog';
+        const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80';
 
-        /* ════════════════════════════════════════
-           RENDER – UNA SOLA PLANTILLA DE TARJETA
-        ════════════════════════════════════════ */
+        const state = {
+            categories: [],
+            selectedCategory: null,
+            maxPrice: 1000,
+        };
+
+        const grid = document.getElementById('products-grid');
+        const count = document.getElementById('result-count');
+        const statusEl = document.getElementById('catalog-status');
+        const categoryDesktop = document.getElementById('category-filters-desktop');
+        const categoryMobile = document.getElementById('category-filters-mobile');
+
+        function money(value) {
+            return Number(value || 0).toFixed(2);
+        }
+
+        function resolveImageUrl(src) {
+            if (!src) {
+                return FALLBACK_IMAGE;
+            }
+
+            if (/^https?:\/\//i.test(src)) {
+                return src;
+            }
+
+            return FALLBACK_IMAGE;
+        }
+
+        function setStatus(text, isError) {
+            statusEl.textContent = text;
+            statusEl.style.color = isError ? '#b43f3f' : '#666';
+        }
+
         function renderCard(producto) {
+            const image = resolveImageUrl(producto.preview_url || producto.image_url);
+
             return `
                 <div class="product-card">
                     <img
                         class="product-img"
-                        src="${producto.imagen}"
-                        alt="${producto.nombre}"
+                        src="${image}"
+                        alt="${producto.name}"
+                        onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'"
                         loading="lazy"
                     />
                     <div class="product-body">
                         <div class="product-meta">
-                            <span class="product-tag">${producto.categoria}</span>
+                            <span class="product-tag">${producto.category_name}</span>
                             <span class="product-rating">
                                 <span class="star-icon">★</span>
-                                ${producto.rating.toFixed(1)}
+                                ${producto.featured ? '5.0' : '4.8'}
                             </span>
                         </div>
-                        <p class="product-name">${producto.nombre}</p>
-                        <p class="product-price">$${producto.precio} <span>MXN</span></p>
+                        <p class="product-name">${producto.name}</p>
+                        <p class="product-price">$${money(producto.base_price)} <span>MXN</span></p>
                         <a href="../landing/personaliza.html?id=${producto.id}" class="btn-detail">Ver detalle</a>
                     </div>
                 </div>
@@ -602,61 +585,145 @@
         }
 
         function renderGrid(lista) {
-            const grid = document.getElementById('products-grid');
-            const count = document.getElementById('result-count');
+            if (!lista.length) {
+                grid.innerHTML = '<p style="grid-column:1/-1;color:#666;">No encontramos diseños con estos filtros.</p>';
+                count.textContent = 'Mostrando 0 resultados';
+                return;
+            }
+
             grid.innerHTML = lista.map(renderCard).join('');
             count.textContent = `Mostrando ${lista.length} resultados`;
         }
 
-        /* Render inicial con todos los productos */
-        renderGrid(productos);
+        function renderCategoryFilters() {
+            const markup = state.categories.map((cat) => `
+                <label class="filter-check">
+                    <input type="radio" name="category" value="${cat.slug}" ${state.selectedCategory === cat.slug ? 'checked' : ''}>
+                    ${cat.name}
+                </label>
+            `).join('');
 
-        /* ════════════════════════════════════════
-           COLOR DOTS – toggle active
-        ════════════════════════════════════════ */
-        document.querySelectorAll('.color-dot').forEach(dot => {
-            dot.addEventListener('click', () => dot.classList.toggle('active'));
-        });
+            const allOption = `
+                <label class="filter-check">
+                    <input type="radio" name="category" value="" ${state.selectedCategory ? '' : 'checked'}>
+                    Todas
+                </label>
+            `;
 
-        /* ════════════════════════════════════════
-           PRICE RANGE
-        ════════════════════════════════════════ */
-        const priceDesktop = document.getElementById('price-range-desktop');
-        const priceValDesktop = document.getElementById('price-val-desktop');
-        if (priceDesktop) {
-            priceDesktop.addEventListener('input', () => {
-                priceValDesktop.textContent = '$' + priceDesktop.value;
+            categoryDesktop.innerHTML = allOption + markup;
+            categoryMobile.innerHTML = allOption + markup;
+
+            document.querySelectorAll('input[name="category"]').forEach((input) => {
+                input.addEventListener('change', () => {
+                    state.selectedCategory = input.value || null;
+
+                    document.querySelectorAll('input[name="category"]').forEach((peer) => {
+                        peer.checked = peer.value === input.value;
+                    });
+
+                    loadDesigns();
+                });
             });
         }
 
-        const priceMobile = document.getElementById('price-range-mobile');
-        const priceValMobile = document.getElementById('price-val-mobile');
-        if (priceMobile) {
-            priceMobile.addEventListener('input', () => {
-                priceValMobile.textContent = '$' + priceMobile.value;
+        async function loadCategories() {
+            const response = await fetch(`${API_BASE}/categories`);
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar las categorías');
+            }
+
+            const payload = await response.json();
+            state.categories = payload.data || [];
+            renderCategoryFilters();
+        }
+
+        async function loadDesigns() {
+            const query = new URLSearchParams();
+            query.set('limit', '24');
+            query.set('maxPrice', String(state.maxPrice));
+
+            if (state.selectedCategory) {
+                query.set('category', state.selectedCategory);
+            }
+
+            setStatus('Cargando diseños...', false);
+            const response = await fetch(`${API_BASE}/designs?${query.toString()}`);
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar los diseños');
+            }
+
+            const payload = await response.json();
+            renderGrid(payload.data || []);
+            setStatus('Catálogo sincronizado con la base de datos.', false);
+        }
+
+        function setupPriceRange() {
+            const priceDesktop = document.getElementById('price-range-desktop');
+            const priceValDesktop = document.getElementById('price-val-desktop');
+            const priceMobile = document.getElementById('price-range-mobile');
+            const priceValMobile = document.getElementById('price-val-mobile');
+
+            function updatePrice(value) {
+                state.maxPrice = Number(value);
+                priceValDesktop.textContent = '$' + value;
+                priceValMobile.textContent = '$' + value;
+                priceDesktop.value = value;
+                priceMobile.value = value;
+            }
+
+            function onPriceChange(value) {
+                updatePrice(value);
+                loadDesigns();
+            }
+
+            priceDesktop.addEventListener('input', () => updatePrice(priceDesktop.value));
+            priceDesktop.addEventListener('change', () => onPriceChange(priceDesktop.value));
+            priceMobile.addEventListener('input', () => updatePrice(priceMobile.value));
+            priceMobile.addEventListener('change', () => onPriceChange(priceMobile.value));
+        }
+
+        function setupColorDots() {
+            document.querySelectorAll('.color-dot').forEach((dot) => {
+                dot.addEventListener('click', () => dot.classList.toggle('active'));
             });
         }
 
-        /* ════════════════════════════════════════
-           MOBILE DRAWER
-        ════════════════════════════════════════ */
-        const openBtn   = document.getElementById('open-filters');
-        const closeBtn  = document.getElementById('close-filters');
-        const drawer    = document.getElementById('filter-drawer');
-        const overlay   = document.getElementById('filter-overlay');
+        function setupMobileDrawer() {
+            const openBtn = document.getElementById('open-filters');
+            const closeBtn = document.getElementById('close-filters');
+            const drawer = document.getElementById('filter-drawer');
+            const overlay = document.getElementById('filter-overlay');
 
-        openBtn.addEventListener('click', () => {
-            drawer.classList.add('open');
-            overlay.classList.add('open');
-        });
+            openBtn.addEventListener('click', () => {
+                drawer.classList.add('open');
+                overlay.classList.add('open');
+            });
 
-        function closeDrawer() {
-            drawer.classList.remove('open');
-            overlay.classList.remove('open');
+            function closeDrawer() {
+                drawer.classList.remove('open');
+                overlay.classList.remove('open');
+            }
+
+            closeBtn.addEventListener('click', closeDrawer);
+            overlay.addEventListener('click', closeDrawer);
         }
 
-        closeBtn.addEventListener('click', closeDrawer);
-        overlay.addEventListener('click', closeDrawer);
+        async function initCatalog() {
+            setupPriceRange();
+            setupColorDots();
+            setupMobileDrawer();
+
+            try {
+                await loadCategories();
+                await loadDesigns();
+            } catch (error) {
+                console.error(error);
+                setStatus('No fue posible conectar con el backend. Verifica que el API esté activo.', true);
+                renderGrid([]);
+            }
+        }
+
+        initCatalog();
     </script>
 
 </body>

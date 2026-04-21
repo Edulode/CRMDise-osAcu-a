@@ -5,6 +5,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Seguridad</title>
+  <script src="../src/js/auth.js" defer></script>
+  <script defer>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+        window.location.href = './login.html';
+      }
+    });
+  </script>
   <link href="../src/css/output.css" rel="stylesheet" />
   <script src="../src/css/sidebar.js" data-active="seguridad" defer></script>
   <link

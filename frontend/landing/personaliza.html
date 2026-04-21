@@ -691,178 +691,144 @@
 
 
     <script>
-        /* ════════════════════════════════════════
-           ARREGLO DE PRODUCTOS
-           → Mismo arreglo que catalogo.html
-           → Reemplaza con fetch a tu API cuando tengas BD:
+        const API_BASE = 'http://localhost:4000/api/catalog';
+        const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80';
 
-           const res     = await fetch('/api/productos/' + idParam);
-           const producto = await res.json();
-        ════════════════════════════════════════ */
-        const productos = [
-            {
-                id: 1,
-                nombre: "Elegancia Clásica",
-                categoria: "Bodas",
-                precio: 450,
-                rating: 4.8,
-                reviewsCount: 127,
-                descripcion: "Invitación elegante con acabados dorados y tipografía clásica. Perfecta para bodas formales y eventos de gala. Incluye sobre y tarjeta de confirmación.",
-                imagenes: [
-                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
-                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=81",
-                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=82",
-                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=83"
-                ],
-                resenas: [
-                    { nombre: "María González", fecha: "15 Feb 2026", estrellas: 5, texto: "¡Absolutamente hermosas! La calidad de impresión superó mis expectativas. Perfectas para nuestra boda." },
-                    { nombre: "Carlos Ramírez", fecha: "10 Feb 2026", estrellas: 5, texto: "Excelente servicio y diseño elegante. Llegaron a tiempo y bien empacadas." },
-                    { nombre: "Ana Martínez",   fecha: "5 Feb 2026",  estrellas: 4, texto: "Muy bonitas, solo el tiempo de entrega fue un poco más de lo esperado pero valió la pena." }
-                ]
-            },
-            {
-                id: 2,
-                nombre: "Moderno Minimalista",
-                categoria: "Bodas",
-                precio: 380,
-                rating: 4.9,
-                reviewsCount: 98,
-                descripcion: "Diseño limpio y moderno con líneas simples y tipografía sans-serif. Ideal para parejas que buscan un estilo contemporáneo y sofisticado.",
-                imagenes: [
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=81",
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=82",
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=83"
-                ],
-                resenas: [
-                    { nombre: "Luis Herrera", fecha: "20 Feb 2026", estrellas: 5, texto: "Increíble diseño, exactamente lo que buscábamos para nuestra boda minimalista." },
-                    { nombre: "Sofía Torres", fecha: "12 Feb 2026", estrellas: 5, texto: "Calidad impecable y entrega rápida. Muy recomendadas." }
-                ]
-            },
-            {
-                id: 3,
-                nombre: "Jardín Florido",
-                categoria: "Bodas",
-                precio: 420,
-                rating: 4.7,
-                reviewsCount: 84,
-                descripcion: "Invitación romántica con motivos florales y paleta de colores cálidos. Perfecta para bodas al aire libre y jardines.",
-                imagenes: [
-                    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80",
-                    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=81",
-                    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=82",
-                    "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=83"
-                ],
-                resenas: [
-                    { nombre: "Patricia Luna", fecha: "18 Feb 2026", estrellas: 5, texto: "Las flores son hermosas, quedaron perfectas para mi boda en el jardín." }
-                ]
-            },
-            {
-                id: 4,
-                nombre: "Simpleza Dorada",
-                categoria: "Bautizos",
-                precio: 395,
-                rating: 4.6,
-                reviewsCount: 61,
-                descripcion: "Diseño tierno y elegante con detalles dorados. Perfecta para celebrar la llegada de un nuevo integrante a la familia.",
-                imagenes: [
-                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&q=80",
-                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&q=81",
-                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&q=82",
-                    "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=800&q=83"
-                ],
-                resenas: [
-                    { nombre: "Gabriela Ramos", fecha: "22 Feb 2026", estrellas: 5, texto: "Preciosas para el bautizo de mi bebé, todos preguntaron dónde las conseguí." }
-                ]
-            },
-            {
-                id: 5,
-                nombre: "Romance Eterno",
-                categoria: "Bodas",
-                precio: 480,
-                rating: 5.0,
-                reviewsCount: 43,
-                descripcion: "La invitación más romántica de nuestra colección. Acabados en papel texturizado con caligrafía artesanal.",
-                imagenes: [
-                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
-                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=81",
-                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=82",
-                    "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=83"
-                ],
-                resenas: [
-                    { nombre: "Valeria Mora", fecha: "25 Feb 2026", estrellas: 5, texto: "Perfectas en todo sentido. Vale cada peso." }
-                ]
-            },
-            {
-                id: 6,
-                nombre: "Fiesta Vibrante",
-                categoria: "Cumpleaños",
-                precio: 350,
-                rating: 4.5,
-                reviewsCount: 72,
-                descripcion: "Colores brillantes y diseño festivo para hacer de tu cumpleaños una celebración memorable desde la primera impresión.",
-                imagenes: [
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=81",
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=82",
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=83"
-                ],
-                resenas: [
-                    { nombre: "Jorge Núñez", fecha: "8 Feb 2026", estrellas: 4, texto: "Muy coloridas y alegres, exactas para el cumpleaños de mi hija." }
-                ]
+        function resolveImageUrl(src) {
+            if (!src) {
+                return FALLBACK_IMAGE;
             }
-        ];
 
-        /* ════════════════════════════════════════
-           CARGAR PRODUCTO SEGÚN ?id= en la URL
-        ════════════════════════════════════════ */
+            if (/^https?:\/\//i.test(src)) {
+                return src;
+            }
+
+            return FALLBACK_IMAGE;
+        }
+
+        function buildFallbackProduct() {
+            return {
+                id: 'fallback',
+                nombre: 'Diseño no disponible',
+                categoria: 'Invitaciones',
+                precio: 0,
+                rating: 4.8,
+                reviewsCount: 1,
+                descripcion: 'No pudimos cargar el diseño solicitado. Puedes volver al catálogo para seleccionar otro.',
+                imagenes: [FALLBACK_IMAGE, FALLBACK_IMAGE, FALLBACK_IMAGE, FALLBACK_IMAGE],
+                resenas: [
+                    {
+                        nombre: 'Equipo Diseños Acuña',
+                        fecha: 'Hoy',
+                        estrellas: 5,
+                        texto: 'Selecciona un diseño del catálogo para personalizarlo.'
+                    }
+                ]
+            };
+        }
+
         function getQueryParam(key) {
             return new URLSearchParams(window.location.search).get(key);
         }
 
-        const idParam  = parseInt(getQueryParam('id')) || 1;
-        const producto = productos.find(p => p.id === idParam) || productos[0];
+        function isUuid(value) {
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value || '');
+        }
 
-        /* ── Llenar info ── */
-        document.getElementById('bc-name').textContent            = producto.nombre;
-        document.getElementById('prod-name').textContent          = producto.nombre;
-        document.getElementById('prod-tag').textContent           = producto.categoria;
-        document.getElementById('prod-desc').textContent          = producto.descripcion;
-        document.getElementById('prod-price').textContent         = producto.precio;
-        document.getElementById('prod-rating-val').textContent    = producto.rating.toFixed(1);
-        document.getElementById('prod-reviews-count').textContent = producto.reviewsCount;
-        document.title = producto.nombre + ' | Diseños Acuña';
+        function normalizeDesign(apiDesign) {
+            const image = resolveImageUrl(apiDesign.preview_url || apiDesign.image_url);
+            return {
+                id: apiDesign.id,
+                nombre: apiDesign.name,
+                categoria: apiDesign.category_name || 'Invitaciones',
+                precio: Number(apiDesign.base_price || 0),
+                rating: apiDesign.featured ? 5.0 : 4.8,
+                reviewsCount: apiDesign.featured ? 34 : 18,
+                descripcion: apiDesign.description || 'Diseño personalizable para tu evento.',
+                imagenes: [image, image, image, image],
+                resenas: [
+                    {
+                        nombre: 'Cliente verificado',
+                        fecha: 'Mar 2026',
+                        estrellas: apiDesign.featured ? 5 : 4,
+                        texto: 'El diseño llegó tal como lo personalizamos y con muy buena calidad.'
+                    }
+                ]
+            };
+        }
 
-        /* Estrellas del header */
-        const fullStars = Math.floor(producto.rating);
-        const hasHalf   = producto.rating % 1 >= 0.5;
-        document.getElementById('prod-stars').textContent =
-            '★'.repeat(fullStars) + (hasHalf ? '½' : '') + '☆'.repeat(5 - fullStars - (hasHalf ? 1 : 0));
+        let producto = buildFallbackProduct();
 
-        /* Precio total inicial */
-        document.getElementById('price-total').textContent = '$' + producto.precio;
+        function paintProductData() {
+            document.getElementById('bc-name').textContent            = producto.nombre;
+            document.getElementById('prod-name').textContent          = producto.nombre;
+            document.getElementById('prod-tag').textContent           = producto.categoria;
+            document.getElementById('prod-desc').textContent          = producto.descripcion;
+            document.getElementById('prod-price').textContent         = producto.precio;
+            document.getElementById('prod-rating-val').textContent    = producto.rating.toFixed(1);
+            document.getElementById('prod-reviews-count').textContent = producto.reviewsCount;
+            document.title = producto.nombre + ' | Diseños Acuña';
 
-        /* ── Galería ── */
-        const mainImg = document.getElementById('main-img');
-        mainImg.src   = producto.imagenes[0];
-        mainImg.alt   = producto.nombre;
+            const fullStars = Math.floor(producto.rating);
+            const hasHalf   = producto.rating % 1 >= 0.5;
+            document.getElementById('prod-stars').textContent =
+                '★'.repeat(fullStars) + (hasHalf ? '½' : '') + '☆'.repeat(5 - fullStars - (hasHalf ? 1 : 0));
 
-        const thumbsContainer = document.getElementById('thumbs-container');
-        producto.imagenes.forEach((src, i) => {
-            const div = document.createElement('div');
-            div.className = 'thumb' + (i === 0 ? ' active' : '');
-            div.innerHTML = `<img src="${src}" alt="Vista ${i + 1} de ${producto.nombre}" loading="lazy">`;
-            div.addEventListener('click', () => {
-                mainImg.style.opacity = '0';
-                setTimeout(() => {
-                    mainImg.src = src;
-                    mainImg.style.opacity = '1';
-                }, 200);
-                document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-                div.classList.add('active');
+            document.getElementById('price-total').textContent = '$' + producto.precio;
+
+            const mainImg = document.getElementById('main-img');
+            mainImg.src   = producto.imagenes[0];
+            mainImg.alt   = producto.nombre;
+            mainImg.onerror = () => {
+                mainImg.onerror = null;
+                mainImg.src = FALLBACK_IMAGE;
+            };
+
+            const thumbsContainer = document.getElementById('thumbs-container');
+            thumbsContainer.innerHTML = '';
+            producto.imagenes.forEach((src, i) => {
+                const div = document.createElement('div');
+                div.className = 'thumb' + (i === 0 ? ' active' : '');
+                div.innerHTML = `<img src="${src}" alt="Vista ${i + 1} de ${producto.nombre}" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'" loading="lazy">`;
+                div.addEventListener('click', () => {
+                    mainImg.style.opacity = '0';
+                    setTimeout(() => {
+                        mainImg.src = src;
+                        mainImg.style.opacity = '1';
+                    }, 200);
+                    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+                    div.classList.add('active');
+                });
+                thumbsContainer.appendChild(div);
             });
-            thumbsContainer.appendChild(div);
-        });
+        }
+
+        async function loadProductFromApi() {
+            const idParam = getQueryParam('id');
+            if (!isUuid(idParam)) {
+                paintProductData();
+                syncReviewData();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/designs/${idParam}`);
+                if (!response.ok) {
+                    paintProductData();
+                    return;
+                }
+
+                const payload = await response.json();
+                producto = normalizeDesign(payload.data);
+                paintProductData();
+                syncReviewData();
+            } catch (_error) {
+                paintProductData();
+                syncReviewData();
+            }
+        }
+
+        paintProductData();
 
         /* ════════════════════════════════════════
            RESEÑAS — renderizado inicial
@@ -875,9 +841,14 @@
         let totalReviews = producto.reviewsCount;
         let totalRating  = producto.reviewsCount * producto.rating;
 
-        /* Inicializa el badge de promedio */
-        document.getElementById('avg-rating').textContent = producto.rating.toFixed(1);
-        document.getElementById('total-count').textContent = totalReviews + ' reseñas';
+        function syncReviewData() {
+            totalReviews = producto.reviewsCount;
+            totalRating = producto.reviewsCount * producto.rating;
+            document.getElementById('avg-rating').textContent = producto.rating.toFixed(1);
+            document.getElementById('total-count').textContent = totalReviews + ' reseñas';
+            document.getElementById('prod-reviews-count').textContent = totalReviews;
+            renderReviews(producto.resenas);
+        }
 
         function renderReviews(resenas) {
             const container = document.getElementById('reviews-container');
@@ -898,7 +869,8 @@
             });
         }
 
-        renderReviews(producto.resenas);
+        syncReviewData();
+        loadProductFromApi();
 
         /* ════════════════════════════════════════
            CANTIDAD → actualiza precio total

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prueba de Checkout</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f4f0;
+            color: #1a1a2e;
+            padding: 2rem;
+        }
+        .card {
+            max-width: 720px;
+            margin: 0 auto;
+            background: #fff;
+            border: 1px solid #e4e1d8;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        }
+        .status { margin-top: 1rem; line-height: 1.6; }
+        .ok { color: #10b981; }
+        .error { color: #dc2626; }
+        .btn {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.85rem 1.25rem;
+            border-radius: 8px;
+            background: #B8962E;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Preparando prueba de checkout</h1>
+        <p class="status" id="status">Iniciando...</p>
+    </div>
+
+    <script src="./src/js/auth.js"></script>
+    <script>
+        async function setupCheckoutTest() {
+            const status = document.getElementById('status');
+
+            try {
+                status.textContent = 'Iniciando sesión con usuario de prueba...';
+                await AUTH.login('test@disenosacuna.com', 'TestPassword123');
+
+                status.textContent = 'Obteniendo catálogo para crear carrito...';
+                const res = await fetch('http://localhost:4000/api/catalog/designs');
+                const data = await res.json();
+                const design = data.data && data.data[0];
+
+                if (!design) {
+                    throw new Error('No hay diseños disponibles para probar');
+                }
+
+                const unitPrice = Number(design.base_price || design.price || 0);
+                const cartItem = {
+                    designId: design.id,
+                    quantity: 2,
+                    personalizationData: {
+                        text: 'Mi texto especial',
+                        color: '#D4A574',
+                    },
+                    total: unitPrice * 2,
+                };
+
+                const cart = {
+                    items: [cartItem],
+                    subtotal: cartItem.total,
+                    total: cartItem.total,
+                };
+
+                sessionStorage.setItem('_cart_data', JSON.stringify(cart));
+                localStorage.setItem('da_carrito', JSON.stringify([{ id: design.id, price: unitPrice, quantity: 2, total: cartItem.total, textoPersonalizado: 'Mi texto especial', colorSeleccionado: '#D4A574' }]));
+
+                status.innerHTML = `
+                    <span class="ok">✓ Sesión y carrito listos</span><br>
+                    Usuario: test@disenosacuna.com<br>
+                    Producto: ${design.name}<br>
+                    Cantidad: ${cartItem.quantity}<br>
+                    Subtotal: $${cartItem.total.toFixed(2)} MXN<br>
+                    <a class="btn" href="./landing/checkout.html">Abrir checkout</a>
+                `;
+
+                window.location.href = './landing/checkout.html';
+            } catch (error) {
+                status.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            }
+        }
+
+        setupCheckoutTest();
+    </script>
+</body>
+</html>

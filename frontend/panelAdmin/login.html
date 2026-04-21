@@ -429,7 +429,7 @@
         </div>
 
         <!-- Rol -->
-        <div class="field">
+        <div class="field" style="display:none;">
           <label for="role">Tipo de usuario</label>
           <div class="input-wrap">
             <svg class="input-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -467,14 +467,14 @@
 
   </div>
 
+  <script src="../src/js/auth.js"></script>
   <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
+    // Redirigir si ya está autenticado
+    if (AUTH.isAuthenticated()) {
+      window.location.href = './index.html';
+    }
 
-    // ── Mock users ──
-    const USERS = [
-      { id: 1, email: 'admin@disenosacuna.com',    password: 'Admin123!',  role: 'admin',    name: 'Administrador' },
-      { id: 2, email: 'empleado@disenosacuna.com', password: 'Empleado1@', role: 'employee', name: 'Empleado'       },
-    ];
+    document.getElementById('year').textContent = new Date().getFullYear();
 
     // ── Toggle password visibility ──
     document.getElementById('togglePass').addEventListener('click', function () {
@@ -549,55 +549,64 @@
 
       const email    = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const role     = document.getElementById('role').value;
 
       // Hide global error
       document.getElementById('errorBanner').classList.remove('visible');
 
-      if (!validateFields(email, password, role)) return;
+      // Validar solo email y password (el rol se determina por backend)
+      let ok = true;
 
-      // Simulate loading
+      if (!email) {
+        ok = setError('email', 'emailError', 'El correo es requerido') && ok;
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        ok = setError('email', 'emailError', 'Ingresa un correo válido') && ok;
+      } else {
+        setError('email', 'emailError', '');
+      }
+
+      if (!password) {
+        ok = setError('password', 'passwordError', 'La contraseña es requerida') && ok;
+      } else if (password.length < 6) {
+        ok = setError('password', 'passwordError', 'Mínimo 6 caracteres') && ok;
+      } else {
+        setError('password', 'passwordError', '');
+      }
+
+      if (!ok) return;
+
+      // Mostrar loading
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       document.getElementById('submitText').textContent = 'Verificando…';
       document.getElementById('submitSpinner').classList.add('visible');
 
-      await new Promise(r => setTimeout(r, 1200));
+      try {
+        // Llamar a auth.login() que hace POST real al API
+        await AUTH.login(email, password);
 
-      // Find user
-      const user = USERS.find(u =>
-        u.email === email &&
-        u.password === password &&
-        u.role === role
-      );
-
-      btn.disabled = false;
-      document.getElementById('submitText').textContent = 'Ingresar al panel';
-      document.getElementById('submitSpinner').classList.remove('visible');
-
-      if (user) {
-        // Save session info
-        sessionStorage.setItem('da_user', JSON.stringify({ id: user.id, name: user.name, role: user.role, email: user.email }));
-        // Redirect to panel
-        window.location.href = '../panelAdmin/index.html';
-      } else {
-        // Show global error
-        const banner = document.getElementById('errorBanner');
-        const msg    = document.getElementById('errorMsg');
-
-        // More specific error messaging
-        const userExists = USERS.find(u => u.email === email);
-        if (!userExists) {
-          msg.textContent = 'No existe una cuenta con ese correo.';
+        // Si llegamos aquí, login fue exitoso
+        const user = AUTH.getUser();
+        
+        // Redirigir según el rol
+        if (user?.role === 'admin' || user?.role === 'employee') {
+          window.location.href = './index.html';
         } else {
-          const roleMatch = USERS.find(u => u.email === email && u.role === role);
-          if (!roleMatch) {
-            msg.textContent = 'El tipo de usuario no coincide con esta cuenta.';
-          } else {
-            msg.textContent = 'Contraseña incorrecta. Inténtalo de nuevo.';
-          }
+          // Si el usuario no es admin/employee, enviarlo al landing
+          AUTH.logout();
+          document.getElementById('errorMsg').textContent = 'Tu cuenta no tiene acceso al panel. Accede como cliente en el sitio principal.';
+          document.getElementById('errorBanner').classList.add('visible');
+          btn.disabled = false;
+          document.getElementById('submitText').textContent = 'Ingresar al panel';
+          document.getElementById('submitSpinner').classList.remove('visible');
         }
-        banner.classList.add('visible');
+      } catch (error) {
+        // Error en login
+        btn.disabled = false;
+        document.getElementById('submitText').textContent = 'Ingresar al panel';
+        document.getElementById('submitSpinner').classList.remove('visible');
+
+        document.getElementById('errorMsg').textContent = error.message || 'Error al iniciar sesión';
+        document.getElementById('errorBanner').classList.add('visible');
 
         // Shake the card
         const card = document.querySelector('.card');
