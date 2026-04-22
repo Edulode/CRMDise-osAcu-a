@@ -672,7 +672,18 @@
 ════════════════════════════════════════════════════ */
 const CART_KEY  = 'da_carrito';
 const ENVIO     = 150;
+const API_BASE  = 'http://localhost:4000/api';
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1565958011504-98d9d8a76c0f?w=200&h=200&fit=crop';
 let currentStep = 1;
+
+/* ════════════════════════════════════════════════════
+   RESOLUCIÓN DE IMÁGENES
+════════════════════════════════════════════════════ */
+function resolveImageUrl(src) {
+    if (!src) return FALLBACK_IMAGE;
+    if (/^https?:\/\//i.test(src)) return src;
+    return FALLBACK_IMAGE;
+}
 
 /* ════════════════════════════════════════════════════
    CARRITO — localStorage
@@ -721,7 +732,7 @@ function renderCart() {
         const div = document.createElement('div');
         div.className = 'cart-item';
         div.innerHTML = `
-            <img class="cart-img" src="${item.imagen}" alt="${item.nombre}" loading="lazy">
+            <img class="cart-img" src="${resolveImageUrl(item.imagen)}" alt="${item.nombre}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1565958011504-98d9d8a76c0f?w=200&h=200&fit=crop'">
             <div class="cart-info">
                 <p class="cart-name">${item.nombre}</p>
                 <p class="cart-price-unit">$${item.precio} MXN / unidad</p>
@@ -899,35 +910,114 @@ function validatePago() {
 document.getElementById('btn-continuar-1').addEventListener('click', () => {
     const cart = getCart();
     if (cart.length === 0) { showToast('⚠ Tu carrito está vacío'); return; }
-    goToStep(2);
+    const checkoutCart = {
+        items: cart.map((item) => ({
+            designId: item.id,
+            quantity: item.cantidad,
+            personalizationData: {
+                textoPersonalizado: item.textoPersonalizado || '',
+                colorSeleccionado: item.colorSeleccionado || '#B8962E'
+            },
+            total: Number(item.precio || 0) * Number(item.cantidad || 1),
+        })),
+    };
+
+    sessionStorage.setItem('_cart_data', JSON.stringify(checkoutCart));
+    window.location.href = './checkout.html';
 });
 
 document.getElementById('btn-continuar-2').addEventListener('click', () => {
     if (validateDatos()) goToStep(3);
 });
 
-document.getElementById('btn-confirmar').addEventListener('click', () => {
+/* ════════════════════════════════════════════════════
+   CREAR PEDIDO — Llamada real a /api/orders/checkout
+════════════════════════════════════════════════════ */
+async function crearPedido() {
     if (!validatePago()) return;
 
-    /* Genera número de orden ficticio
-       TODO (con BD): reemplazar por:
-       const res   = await fetch('/api/pedidos', { method:'POST', ... });
-       const pedido = await res.json();
-       usar pedido.numero y pedido.email en la confirmación
-    */
-    const orderNum = '#DA-2026-' + String(Math.floor(Math.random() * 9000) + 1000);
-    const email    = document.getElementById('d-email').value.trim();
+    const btnConfirmar = document.getElementById('btn-confirmar');
+    btnConfirmar.disabled = true;
+    showToast('Procesando tu pedido...');
 
-    document.getElementById('confirm-order-num').textContent = 'Número de orden: ' + orderNum;
-    document.getElementById('confirm-email').textContent     = email;
+    try {
+        // Recopilar datos del cliente
+        const nombre = document.getElementById('d-nombre').value.trim();
+        const apellidos = document.getElementById('d-apellidos').value.trim();
+        const email = document.getElementById('d-email').value.trim();
+        const phone = document.getElementById('d-tel').value.trim();
+        const dirección = document.getElementById('d-dir').value.trim();
+        const ciudad = document.getElementById('d-ciudad').value.trim();
+        const cp = document.getElementById('d-cp').value.trim();
 
-    /* Limpiar carrito */
-    localStorage.removeItem(CART_KEY);
-    if (typeof window.daUpdateCart === 'function') window.daUpdateCart(0);
-    else sessionStorage.setItem('da_cart_count', '0');
+        // Recuperar carrito
+        const cart = getCart();
+        if (cart.length === 0) {
+            showToast('⚠ Tu carrito está vacío');
+            btnConfirmar.disabled = false;
+            return;
+        }
 
-    goToStep(4);
-});
+        // Construir payload
+        const payload = {
+            customer: {
+                fullName: `${nombre} ${apellidos}`,
+                email: email,
+                phone: phone || null,
+                eventType: null,
+                preferredStyle: null,
+                consentGiven: true,
+                notes: `Dirección: ${dirección}, ${ciudad} ${cp}`
+            },
+            items: cart.map(item => ({
+                designId: item.id,
+                quantity: item.cantidad,
+                personalizationData: {
+                    textoPersonalizado: item.textoPersonalizado || '',
+                    colorSeleccionado: item.colorSeleccionado || '#B8962E'
+                }
+            })),
+            shippingPrice: ENVIO,
+            notes: null
+        };
+
+        // Hacer POST a /api/orders/checkout
+        const response = await fetch(`${API_BASE}/orders/checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            showToast(`⚠ ${error.message || 'Error al crear el pedido'}`);
+            btnConfirmar.disabled = false;
+            return;
+        }
+
+        const result = await response.json();
+        const order = result.data;
+
+        // Mostrar confirmación con datos reales
+        document.getElementById('confirm-order-num').textContent = `Número de orden: ${order.order_code}`;
+        document.getElementById('confirm-email').textContent = order.customer.email;
+
+        // Limpiar carrito
+        localStorage.removeItem(CART_KEY);
+        if (typeof window.daUpdateCart === 'function') window.daUpdateCart(0);
+        else sessionStorage.setItem('da_cart_count', '0');
+
+        showToast('✓ ¡Pedido confirmado!');
+        goToStep(4);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(`⚠ Error: ${error.message}`);
+        btnConfirmar.disabled = false;
+    }
+}
+
+document.getElementById('btn-confirmar').addEventListener('click', crearPedido);
 
 /* ════════════════════════════════════════════════════
    FORMATO AUTOMÁTICO — número de tarjeta y expiración

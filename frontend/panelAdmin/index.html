@@ -1,10 +1,164 @@
 <!DOCTYPE html>
 <html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <link href="../src/css/output.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: #f5f4f0; color: #1a1a2e; }
+    .card { background: #fff; border: 1px solid #e7e4da; border-radius: 12px; padding: 16px; }
+    .kpi { font-size: 28px; font-weight: 800; }
+    .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .side { background: #fff; border-right: 1px solid #e7e4da; padding: 20px; }
+    .side a { display: block; padding: 10px; border-radius: 8px; margin-bottom: 8px; text-decoration: none; color: #6b7280; }
+    .side a.active { background: #1a1a2e; color: #fff; }
+    .main { padding: 24px; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .side { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="side">
+      <h2 style="font-weight:800;margin-bottom:16px;">Admin</h2>
+      <a class="active" href="index.html">Dashboard</a>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="disenos.html">Diseños</a>
+      <a href="clientes.html">Clientes</a>
+    </aside>
+
+    <main class="main">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h1 style="font-size:28px;font-weight:800;">Dashboard</h1>
+        <button id="refreshBtn" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;">Actualizar</button>
+      </div>
+
+      <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:14px;">
+        <div class="card"><div>Ventas hoy</div><div class="kpi" id="kpiSalesToday">$0</div></div>
+        <div class="card"><div>Ventas semana</div><div class="kpi" id="kpiSalesWeek">$0</div></div>
+        <div class="card"><div>Órdenes pendientes</div><div class="kpi" id="kpiPending">0</div></div>
+        <div class="card"><div>Clientes únicos</div><div class="kpi" id="kpiCustomers">0</div></div>
+      </section>
+
+      <section style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
+        <div class="card"><h3 style="font-weight:700;margin-bottom:8px;">Ventas últimos 7 días</h3><canvas id="salesChart" height="130"></canvas></div>
+        <div class="card"><h3 style="font-weight:700;margin-bottom:8px;">Estados</h3><canvas id="statusChart" height="130"></canvas></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../src/js/auth.js"></script>
+  <script>
+    const API_BASE = 'http://localhost:4000/api';
+    let salesChart = null;
+    let statusChart = null;
+
+    function ensureAdmin() {
+      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+        window.location.href = './login.html';
+        return false;
+      }
+      return true;
+    }
+
+    function currency(v) {
+      return '$' + Number(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+    }
+
+    async function loadDashboard() {
+      const response = await fetch(`${API_BASE}/orders`, { headers: AUTH.getHeaders() });
+      if (!response.ok) throw new Error('No se pudo cargar órdenes');
+      const result = await response.json();
+      const orders = result.data || [];
+
+      const today = new Date().toISOString().slice(0, 10);
+      const weekStartDate = new Date();
+      weekStartDate.setDate(weekStartDate.getDate() - 6);
+
+      let salesToday = 0;
+      let salesWeek = 0;
+      let pending = 0;
+
+      const statusCounts = {
+        pending: 0,
+        paid: 0,
+        in_production: 0,
+        shipped: 0,
+        completed: 0,
+        canceled: 0,
+      };
+
+      const dayMap = {};
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dayMap[d.toISOString().slice(0, 10)] = 0;
+      }
+
+      orders.forEach((o) => {
+        const orderDate = String(o.created_at || '').slice(0, 10);
+        const total = Number(o.total_amount || 0);
+
+        if (orderDate === today) salesToday += total;
+        if (new Date(orderDate) >= weekStartDate) salesWeek += total;
+        if (['pending', 'paid', 'in_production'].includes(o.status)) pending += 1;
+        if (statusCounts[o.status] !== undefined) statusCounts[o.status] += 1;
+        if (dayMap[orderDate] !== undefined) dayMap[orderDate] += total;
+      });
+
+      document.getElementById('kpiSalesToday').textContent = currency(salesToday);
+      document.getElementById('kpiSalesWeek').textContent = currency(salesWeek);
+      document.getElementById('kpiPending').textContent = String(pending);
+      document.getElementById('kpiCustomers').textContent = String(new Set(orders.map((o) => o.customer_email)).size);
+
+      const labels = Object.keys(dayMap).map((d) => new Date(d).toLocaleDateString('es-MX', { weekday: 'short' }));
+      const values = Object.values(dayMap);
+      if (salesChart) salesChart.destroy();
+      if (statusChart) statusChart.destroy();
+
+      salesChart = new Chart(document.getElementById('salesChart'), {
+        type: 'line',
+        data: { labels, datasets: [{ data: values, borderColor: '#B8962E', fill: true, backgroundColor: 'rgba(184,150,46,0.1)' }] },
+        options: { plugins: { legend: { display: false } }, maintainAspectRatio: false }
+      });
+
+      statusChart = new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Pend', 'Pag', 'Prod', 'Env', 'Comp', 'Canc'],
+          datasets: [{ data: Object.values(statusCounts), backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#16a34a', '#dc2626'] }]
+        },
+        options: { maintainAspectRatio: false }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!ensureAdmin()) return;
+      document.getElementById('refreshBtn').addEventListener('click', async () => {
+        try { await loadDashboard(); } catch (e) { alert(e.message); }
+      });
+      try { await loadDashboard(); } catch (e) { alert(e.message); }
+    });
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="es">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Diseños Acuña - Dashboard</title>
+
+  <script src="../src/js/auth.js" defer></script>
+  <script defer>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+        window.location.href = './login.html';
+      }
+    });
+  </script>
 
   <link href="../src/css/output.css" rel="stylesheet" />
   <script src="../src/css/sidebar.js" data-active="dashboard" defer></script>
@@ -145,7 +299,7 @@
           <span class="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">+12.5%</span>
         </div>
         <p class="text-sm text-gray-500 mb-1">Ventas Hoy</p>
-        <p class="text-2xl font-bold text-gray-900">$12,450</p>
+        <p class="text-2xl font-bold text-gray-900" data-kpi="ventas-hoy">$0</p>
       </div>
 
       <!-- Pedidos Pendientes -->
@@ -161,7 +315,7 @@
           <span class="text-xs font-semibold text-blue-500 bg-blue-50 px-2 py-1 rounded-full">+3</span>
         </div>
         <p class="text-sm text-gray-500 mb-1">Pedidos Pendientes</p>
-        <p class="text-2xl font-bold text-gray-900">24</p>
+        <p class="text-2xl font-bold text-gray-900" data-kpi="pendientes">0</p>
       </div>
 
       <!-- Ingresos Mensuales -->
@@ -176,7 +330,7 @@
           <span class="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">+18.2%</span>
         </div>
         <p class="text-sm text-gray-500 mb-1">Ingresos Mensuales</p>
-        <p class="text-2xl font-bold text-gray-900">$89,340</p>
+        <p class="text-2xl font-bold text-gray-900" data-kpi="ingresos">$0</p>
       </div>
 
       <!-- Clientes Nuevos -->
@@ -191,8 +345,8 @@
           </div>
           <span class="text-xs font-semibold text-purple-500 bg-purple-50 px-2 py-1 rounded-full">+8</span>
         </div>
-        <p class="text-sm text-gray-500 mb-1">Clientes Nuevos</p>
-        <p class="text-2xl font-bold text-gray-900">142</p>
+        <p class="text-sm text-gray-500 mb-1">Clientes Únicos</p>
+        <p class="text-2xl font-bold text-gray-900" data-kpi="clientes">0</p>
       </div>
 
     </div>
@@ -273,36 +427,114 @@
   </div>
 
   <!-- ════════════════════════════════
-       DATA SIMULADA (reemplazar con backend)
+       CARGAR ÓRDENES REALES DE LA API
        ════════════════════════════════ -->
   <script>
 
-    /* ── Datos simulados ─────────────────────────── */
+    const API_BASE = 'http://localhost:4000/api';
+
+    // Mapeo de estados
+    const statusMap = {
+      'pending':       { label: 'Pendiente',     badge: 'badge-pendiente' },
+      'paid':          { label: 'Pagado',        badge: 'badge-pendiente' },
+      'in_production': { label: 'En producción', badge: 'badge-produccion' },
+      'shipped':       { label: 'Enviado',       badge: 'badge-enviado' },
+      'completed':     { label: 'Completado',    badge: 'badge-completado' },
+      'canceled':      { label: 'Cancelado',     badge: 'bg-red-100 text-red-700' },
+    };
+
+    let pedidosData = [];
+    let estadisticas = {
+      ventasHoy: 0,
+      pendientes: 0,
+      ingresosMax: 0,
+      clientesNuevos: 0,
+    };
+
+    /* ── Cargar órdenes de la API ────────────────── */
+    async function cargarOrdenes() {
+      try {
+        const response = await fetch(`${API_BASE}/orders`, {
+          headers: AUTH.getHeaders(),
+        });
+
+        if (!response.ok) {
+          console.error('Error al cargar órdenes:', response.status);
+          return;
+        }
+
+        const result = await response.json();
+        pedidosData = result.data || [];
+
+        // Procesar estadísticas
+        procesarEstadisticas();
+
+        // Renderizar tabla
+        renderPedidos();
+
+        console.log('✅ Órdenes cargadas:', pedidosData.length);
+      } catch (error) {
+        console.error('❌ Error cargando órdenes:', error);
+      }
+    }
+
+    /* ── Procesar estadísticas ────────────────────── */
+    function procesarEstadisticas() {
+      const hoy = new Date().toISOString().split('T')[0];
+      
+      pedidosData.forEach(orden => {
+        const fechaOrden = orden.created_at.split('T')[0];
+        
+        if (fechaOrden === hoy) {
+          estadisticas.ventasHoy += Number(orden.total_amount) || 0;
+        }
+        
+        if (orden.status === 'pending' || orden.status === 'paid') {
+          estadisticas.pendientes += 1;
+        }
+        
+        estadisticas.ingresosMax += Number(orden.total_amount) || 0;
+      });
+
+      // Actualizar elementos de KPI
+      document.querySelectorAll('[data-kpi]').forEach(el => {
+        const tipo = el.dataset.kpi;
+        let valor = '';
+        
+        switch(tipo) {
+          case 'ventas-hoy':
+            valor = '$' + estadisticas.ventasHoy.toLocaleString('es-MX', {minimumFractionDigits: 0});
+            break;
+          case 'pendientes':
+            valor = estadisticas.pendientes;
+            break;
+          case 'ingresos':
+            valor = '$' + estadisticas.ingresosMax.toLocaleString('es-MX', {minimumFractionDigits: 0});
+            break;
+          case 'clientes':
+            valor = new Set(pedidosData.map(o => o.customer_id)).size;
+            break;
+        }
+        
+        el.textContent = valor;
+      });
+    }
+
+    /* ── Cargar al abrir la página ───────────────── */
+    document.addEventListener('DOMContentLoaded', async () => {
+      await cargarOrdenes();
+    });
+
+    /* ── Datos para gráficos ────────────────────── */
     const ventasMensuales = {
       labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-      data:   [10000, 18000, 15000, 24000, 22000, 30500],
+      data:   [0, 0, 0, 0, 0, 0],
     };
 
     const productosVendidos = {
-      labels: ['Elegancia Clásica', 'Moderno Minimalista', 'Jardín Florido', 'Romance Eterno', 'Simpleza Dorada'],
-      data:   [160, 142, 115, 95, 72],
+      labels: ['Productos más solicitados'],
+      data:   [0],
     };
-
-    const pedidosData = [
-      { id: 'DA-2026-0217', cliente: 'María González',  fecha: '17 Feb 2026', estado: 'Pendiente',     total: '$1,280' },
-      { id: 'DA-2026-0216', cliente: 'Carlos Ramírez',  fecha: '16 Feb 2026', estado: 'En producción', total: '$2,450' },
-      { id: 'DA-2026-0215', cliente: 'Ana Martínez',    fecha: '15 Feb 2026', estado: 'Enviado',       total: '$890'   },
-      { id: 'DA-2026-0214', cliente: 'Luis Hernández',  fecha: '14 Feb 2026', estado: 'Completado',    total: '$1,650' },
-      { id: 'DA-2026-0213', cliente: 'Sofía López',     fecha: '13 Feb 2026', estado: 'Completado',    total: '$3,200' },
-    ];
-
-    /* ── Charts ──────────────────────────────────── */
-    new Chart(document.getElementById('chartVentas'), {
-      type: 'line',
-      data: {
-        labels: ventasMensuales.labels,
-        datasets: [{
-          data: ventasMensuales.data,
           borderColor: '#c9a84c',
           backgroundColor: 'rgba(201,168,76,0.08)',
           borderWidth: 2.5,
@@ -350,33 +582,65 @@
         }
       }
     });
+    }
+
+      // Chart de productos (barra)
+      chartProductos = new Chart(document.getElementById('chartProductos'), {
+        type: 'bar',
+        data: {
+          labels: productosVendidos.labels,
+          datasets: [{ data: productosVendidos.data, backgroundColor: '#1a2232', borderRadius: 4, borderSkipped: false }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#f1f5f9' }, ticks: { color: '#9ca3af', font: { size: 11, family: 'DM Sans' } } },
+            y: { grid: { display: false },   ticks: { color: '#374151', font: { size: 11, family: 'DM Sans' } } }
+          }
+        }
+      });
+    }
+
+    // Inicializar charts cuando el documento esté listo
+    window.addEventListener('DOMContentLoaded', () => {
+      initCharts();
 
     /* ── Badge helper ────────────────────────────── */
     function badgeClass(estado) {
-      const map = {
-        'Pendiente':     'badge-pendiente',
-        'En producción': 'badge-produccion',
-        'Enviado':       'badge-enviado',
-        'Completado':    'badge-completado',
-      };
-      return map[estado] || 'bg-gray-100 text-gray-600';
+      const info = statusMap[estado] || { label: estado, badge: 'bg-gray-100 text-gray-600' };
+      return info.badge;
+    }
+
+    function etiquetaEstado(estado) {
+      const info = statusMap[estado] || { label: estado };
+      return info.label;
     }
 
     /* ── Render tabla ────────────────────────────── */
     function renderPedidos() {
       const tbody = document.getElementById('tabla-pedidos');
       tbody.innerHTML = '';
+
+      if (pedidosData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #9ca3af;">Sin órdenes registradas</td></tr>';
+        return;
+      }
+
       pedidosData.slice(0, 5).forEach((p, idx) => {
+        const fecha = new Date(p.created_at).toLocaleDateString('es-MX');
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition-colors';
         tr.innerHTML = `
-          <td data-label="ID"      class="px-6 py-3.5 font-mono text-xs text-gray-400">${p.id}</td>
-          <td data-label="Cliente" class="px-6 py-3.5 font-medium text-gray-800">${p.cliente}</td>
-          <td data-label="Fecha"   class="px-6 py-3.5 text-gray-500">${p.fecha}</td>
+          <td data-label="ID"      class="px-6 py-3.5 font-mono text-xs text-gray-400">${p.order_code}</td>
+          <td data-label="Cliente" class="px-6 py-3.5 font-medium text-gray-800">${p.customer_name || 'Cliente'}</td>
+          <td data-label="Fecha"   class="px-6 py-3.5 text-gray-500">${fecha}</td>
           <td data-label="Estado"  class="px-6 py-3.5">
-            <span class="badge ${badgeClass(p.estado)}">${p.estado}</span>
+            <span class="badge ${badgeClass(p.status)}">${etiquetaEstado(p.status)}</span>
           </td>
-          <td data-label="Total"   class="px-6 py-3.5 text-right font-semibold text-gray-800">${p.total}</td>
+          <td data-label="Total"   class="px-6 py-3.5 text-right font-semibold text-gray-800">$${Number(p.total_amount).toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
           <td data-label="Acción"  class="px-6 py-3.5 text-center">
             <button id="btn-${idx}"
               onclick="abrirDropdown(${idx}, event)"
@@ -393,8 +657,6 @@
         tbody.appendChild(tr);
       });
     }
-
-    renderPedidos();
 
     /* ── Dropdown con position:fixed ─────────────── */
     // Un solo elemento reutilizable, posicionado con getBoundingClientRect()
@@ -453,15 +715,47 @@
     });
 
     /* ── Acciones ────────────────────────────────── */
-    function editarPedido(id) {
-      // TODO: reemplazar con tu modal o redirección
-      alert(`Editar pedido: ${id}`);
+    function editarPedido(orderCode, idx) {
+      const nuevoEstado = prompt(
+        'Nuevo estado:\npending\npaid\nin_production\nshipped\ncompleted\ncanceled',
+        pedidosData[idx].status
+      );
+
+      if (!nuevoEstado || !statusMap[nuevoEstado]) return;
+
+      // Enviar cambio de estado a la API
+      cambiarEstadoPedido(pedidosData[idx].id, nuevoEstado, orderCode);
     }
 
-    function eliminarPedido(id, idx) {
-      if (confirm(`¿Eliminar el pedido ${id}?`)) {
-        pedidosData.splice(idx, 1);
-        renderPedidos();
+    async function cambiarEstadoPedido(orderId, nuevoEstado, orderCode) {
+      try {
+        const response = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+          method: 'PATCH',
+          headers: AUTH.getHeaders(),
+          body: JSON.stringify({ status: nuevoEstado }),
+        });
+
+        if (!response.ok) {
+          alert('Error al actualizar el estado');
+          return;
+        }
+
+        // Actualizar en la vista
+        const idx = pedidosData.findIndex(p => p.id === orderId);
+        if (idx >= 0) {
+          pedidosData[idx].status = nuevoEstado;
+          renderPedidos();
+          alert(`✓ Pedido ${orderCode} actualizado a: ${etiquetaEstado(nuevoEstado)}`);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error al cambiar el estado');
+      }
+    }
+
+    function eliminarPedido(orderCode, idx) {
+      if (confirm(`¿Cancelar el pedido ${orderCode}?`)) {
+        cambiarEstadoPedido(pedidosData[idx].id, 'canceled', orderCode);
       }
     }
 

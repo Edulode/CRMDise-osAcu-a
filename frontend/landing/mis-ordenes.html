@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mis Órdenes — Diseños Acuña</title>
+  <script src="../src/js/auth.js" defer></script>
+  <script src="../src/css/navbar.js" defer></script>
+  <script defer>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!AUTH.isAuthenticated()) {
+        window.location.href = './login.html';
+      }
+    });
+  </script>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" />
+  <link href="../src/css/output.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --gold: #c9a84c;
+      --navy: #1a2232;
+      --light: #f8f7f4;
+      --muted: #6b7280;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--light);
+      color: var(--navy);
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .header {
+      margin-bottom: 2rem;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: var(--muted);
+    }
+
+    /* ── Cards de orden ──────────────────── */
+    .orders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .order-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .order-card:hover {
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .order-code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .order-date {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .order-total {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Status Badge ────────────────── */
+    .status-badge {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .status-pending {
+      background: #fef9c3;
+      color: #a16207;
+    }
+
+    .status-paid {
+      background: #dbeafe;
+      color: #0369a1;
+    }
+
+    .status-production {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .status-shipped {
+      background: #f3e8ff;
+      color: #7e22ce;
+    }
+
+    .status-completed {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-canceled {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    /* ── Tabla de items ──────────────── */
+    .items-table {
+      width: 100%;
+      font-size: 0.85rem;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .items-table thead {
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .items-table th {
+      padding: 0.5rem 0;
+      text-align: left;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+    }
+
+    .items-table td {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    /* ── Empty State ─────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      background: white;
+      border-radius: 12px;
+      border: 1px dashed #e5e7eb;
+    }
+
+    .empty-state svg {
+      width: 60px;
+      height: 60px;
+      color: #d1d5db;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    .shopping-btn {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.7rem 1.5rem;
+      background: var(--gold);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .shopping-btn:hover {
+      background: #a8872e;
+    }
+
+    /* ── Loading ─────────────────────── */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+    }
+
+    .skeleton {
+      background: #e5e7eb;
+      border-radius: 8px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ── Responsive ──────────────────── */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .orders-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .order-card {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main>
+
+    <div class="header">
+      <h1>Mis Órdenes</h1>
+      <p id="user-greeting">Bienvenido</p>
+    </div>
+
+    <div id="orders-container" class="orders-grid">
+      <div class="loading">Cargando órdenes...</div>
+    </div>
+
+  </main>
+
+  <script>
+    const API_BASE = 'http://localhost:4000/api';
+
+    // Mapeo de estados
+    const statusMap = {
+      'pending': { label: 'Pendiente', class: 'status-pending' },
+      'paid': { label: 'Pagado', class: 'status-paid' },
+      'in_production': { label: 'En producción', class: 'status-production' },
+      'shipped': { label: 'Enviado', class: 'status-shipped' },
+      'completed': { label: 'Completado', class: 'status-completed' },
+      'canceled': { label: 'Cancelado', class: 'status-canceled' },
+    };
+
+    async function cargarOrdenes() {
+      try {
+        const user = AUTH.getUser();
+        if (user?.full_name) {
+          document.getElementById('user-greeting').textContent = `Bienvenido, ${user.full_name}`;
+        }
+
+        const response = await fetch(`${API_BASE}/orders`, {
+          headers: AUTH.getHeaders(),
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al cargar órdenes');
+        }
+
+        const result = await response.json();
+        const ordenes = result.data || [];
+
+        renderOrdenes(ordenes);
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('orders-container').innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M12 9v2m0 4v2m0 4v2m0-14V5M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+            </svg>
+            <h3>Error al cargar órdenes</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderOrdenes(ordenes) {
+      const container = document.getElementById('orders-container');
+
+      if (ordenes.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+            <h3>Sin órdenes registradas</h3>
+            <p>Aún no has realizado ninguna compra. ¡Explora nuestro catálogo!</p>
+            <a href="./catalogo.html" class="shopping-btn">Ver Catálogo</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = ordenes.map(orden => {
+        const status = statusMap[orden.status] || { label: orden.status, class: 'status-pending' };
+        const fecha = new Date(orden.created_at).toLocaleDateString('es-MX', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        return `
+          <div class="order-card">
+            <div class="order-code">#${orden.order_code}</div>
+            <div class="order-date">${fecha}</div>
+            <div class="status-badge ${status.class}">${status.label}</div>
+            <div class="order-total">$${Number(orden.total_amount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
+            ${orden.items ? `
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Diseño</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${orden.items.map(item => `
+                    <tr>
+                      <td>${item.design_name || 'Diseño'}</td>
+                      <td>${item.quantity}</td>
+                      <td>$${Number(item.total_price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Cargar órdenes cuando el documento esté listo
+    window.addEventListener('DOMContentLoaded', cargarOrdenes);
+  </script>
+
+</body>
+
+</html>

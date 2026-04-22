@@ -400,7 +400,7 @@
         </a>
 
         <!-- Botón Iniciar Sesión (sin sesión activa) -->
-        <a href="../landing/cuenta.html" class="da-btn-login" id="da-btn-login">Iniciar Sesión</a>
+        <a href="../landing/login.html" class="da-btn-login" id="da-btn-login">Iniciar Sesión</a>
 
         <!-- Ícono perfil + dropdown (con sesión activa) -->
         <div class="da-profile-wrap" id="da-profile-wrap">
@@ -444,31 +444,31 @@
   wrapper.innerHTML = navHTML;
   document.body.prepend(wrapper);
 
-  /* ═══════════════════════════════════════════════
-     7. LÓGICA DE SESIÓN
-  ═══════════════════════════════════════════════ */
-  const SESSION_KEY = "da_user";
-
-  function getUser() {
-    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); }
-    catch { return null; }
+  /* Cargar auth.js si no está disponible */
+  if (typeof AUTH === 'undefined') {
+    const authScript = document.createElement('script');
+    authScript.src = '../src/js/auth.js';
+    authScript.onload = initNavbar;
+    document.head.appendChild(authScript);
+  } else {
+    initNavbar();
   }
 
-  function renderAuth() {
-    const user        = getUser();
+  function initNavbar() {
     const btnLogin    = document.getElementById("da-btn-login");
     const profileWrap = document.getElementById("da-profile-wrap");
     const mobileAuth  = document.getElementById("da-mobile-auth");
+    const user = AUTH.getUser();
 
-    if (user) {
+    if (user && AUTH.isAuthenticated()) {
       btnLogin.style.display = "none";
       profileWrap.classList.add("visible");
-      document.getElementById("da-profile-name").textContent  = user.nombre || "Usuario";
+      document.getElementById("da-profile-name").textContent  = user.full_name || "Usuario";
       document.getElementById("da-profile-email").textContent = user.email  || "";
 
       mobileAuth.innerHTML = `
         <p style="font-size:.8rem;color:#9ca3af;padding:.4rem .5rem 0;">
-          Hola, <strong style="color:#1a2232">${user.nombre || "Usuario"}</strong>
+          Hola, <strong style="color:#1a2232">${user.full_name || "Usuario"}</strong>
         </p>
         <button class="da-mobile-logout" id="da-mobile-logout-btn">
           ${svg(ICONS.logout)} Cerrar Sesión
@@ -478,16 +478,18 @@
     } else {
       btnLogin.style.display = "";
       profileWrap.classList.remove("visible");
-      mobileAuth.innerHTML = `<a href="../landing/cuenta.html" class="da-mobile-btn-login">Iniciar Sesión</a>`;
+      mobileAuth.innerHTML = `<a href="../landing/login.html" class="da-mobile-btn-login">Iniciar Sesión</a>`;
     }
   }
 
   function logOut() {
-    sessionStorage.removeItem(SESSION_KEY);
+    AUTH.logout();
     closeMobileMenu();
     closeProfileMenu();
-    renderAuth();
     showToast("✓ Sesión cerrada correctamente");
+    setTimeout(() => {
+      window.location.href = "../landing/index.html";
+    }, 500);
   }
 
   /* ═══════════════════════════════════════════════

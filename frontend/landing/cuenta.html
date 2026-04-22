@@ -5,6 +5,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mi Cuenta — Diseños Acuña</title>
+    <script src="../src/js/auth.js" defer></script>
+    <script src="../src/css/navbar.js" defer></script>
+    <script defer>
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!AUTH.isAuthenticated()) {
+                window.location.href = './login.html';
+            }
+        });
+    </script>
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" />
     <style>

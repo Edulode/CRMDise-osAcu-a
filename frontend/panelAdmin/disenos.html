@@ -1,10 +1,236 @@
 <!DOCTYPE html>
 <html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Diseños</title>
+  <link href="../src/css/output.css" rel="stylesheet" />
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: #f5f4f0; color: #1a1a2e; }
+    .card { background: #fff; border: 1px solid #e7e4da; border-radius: 12px; padding: 16px; }
+    .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .side { background: #fff; border-right: 1px solid #e7e4da; padding: 20px; }
+    .side a { display: block; padding: 10px; border-radius: 8px; margin-bottom: 8px; text-decoration: none; color: #6b7280; }
+    .side a.active { background: #1a1a2e; color: #fff; }
+    .main { padding: 24px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #ececec; text-align: left; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-card { background: #fff; border-radius: 12px; width: min(560px, 92vw); padding: 16px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .side { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="side">
+      <h2 style="font-weight:800;margin-bottom:16px;">Admin</h2>
+      <a href="index.html">Dashboard</a>
+      <a href="pedidos.html">Pedidos</a>
+      <a class="active" href="disenos.html">Diseños</a>
+      <a href="clientes.html">Clientes</a>
+    </aside>
+
+    <main class="main">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;">
+        <h1 style="font-size:28px;font-weight:800;">Diseños</h1>
+        <div style="display:flex;gap:8px;">
+          <button id="newBtn" style="padding:10px 14px;border-radius:8px;background:#B8962E;color:#fff;border:none;">Nuevo</button>
+          <button id="refreshBtn" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;">Actualizar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <input id="searchInput" placeholder="Buscar nombre" style="padding:10px;border:1px solid #ddd;border-radius:8px;min-width:260px;" />
+        </div>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Activo</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-card">
+      <h3 id="modalTitle" style="font-size:20px;font-weight:800;margin-bottom:8px;">Nuevo diseño</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <input id="fName" placeholder="Nombre" style="padding:10px;border:1px solid #ddd;border-radius:8px;" />
+        <div class="grid2">
+          <input id="fCategoryId" placeholder="Category ID (opcional)" style="padding:10px;border:1px solid #ddd;border-radius:8px;" />
+          <input id="fPrice" type="number" min="0" step="0.01" placeholder="Precio" style="padding:10px;border:1px solid #ddd;border-radius:8px;" />
+        </div>
+        <div class="grid2">
+          <input id="fStock" type="number" min="0" step="1" placeholder="Stock" style="padding:10px;border:1px solid #ddd;border-radius:8px;" />
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;"><input id="fActive" type="checkbox" checked /> Activo</label>
+        </div>
+        <textarea id="fDescription" placeholder="Descripción" rows="3" style="padding:10px;border:1px solid #ddd;border-radius:8px;"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+        <button id="cancelBtn" style="padding:9px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;">Cancelar</button>
+        <button id="saveBtn" style="padding:9px 12px;border:none;border-radius:8px;background:#1a1a2e;color:#fff;">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../src/js/auth.js"></script>
+  <script>
+    const API_BASE = 'http://localhost:4000/api';
+    let designs = [];
+    let editingId = null;
+
+    function ensureAdmin() {
+      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+        window.location.href = './login.html';
+        return false;
+      }
+      return true;
+    }
+
+    function money(v) {
+      return '$' + Number(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
+    }
+
+    async function fetchDesigns() {
+      const response = await fetch(`${API_BASE}/designs`, { headers: AUTH.getHeaders() });
+      if (!response.ok) throw new Error('No se pudo cargar diseños');
+      const result = await response.json();
+      designs = result.data || [];
+      render();
+    }
+
+    function render() {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const filtered = designs.filter((d) => !q || String(d.name).toLowerCase().includes(q));
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = filtered.map((d) => `
+        <tr>
+          <td>${d.name}</td>
+          <td>${d.category_name || '-'}</td>
+          <td>${money(d.base_price)}</td>
+          <td>${Number(d.stock || 0)}</td>
+          <td>${d.active ? 'Sí' : 'No'}</td>
+          <td>
+            <button onclick="openEdit('${d.id}')" style="padding:6px 10px;border:1px solid #3b82f6;color:#3b82f6;border-radius:6px;margin-right:6px;">Editar</button>
+            <button onclick="removeDesign('${d.id}')" style="padding:6px 10px;border:1px solid #ef4444;color:#ef4444;border-radius:6px;">Desactivar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openModal() {
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Nuevo diseño';
+      document.getElementById('fName').value = '';
+      document.getElementById('fCategoryId').value = '';
+      document.getElementById('fPrice').value = '';
+      document.getElementById('fStock').value = '0';
+      document.getElementById('fDescription').value = '';
+      document.getElementById('fActive').checked = true;
+    }
+
+    function openEdit(id) {
+      const d = designs.find((x) => x.id === id);
+      if (!d) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = 'Editar diseño';
+      document.getElementById('fName').value = d.name || '';
+      document.getElementById('fCategoryId').value = d.category_id || '';
+      document.getElementById('fPrice').value = Number(d.base_price || 0);
+      document.getElementById('fStock').value = Number(d.stock || 0);
+      document.getElementById('fDescription').value = d.description || '';
+      document.getElementById('fActive').checked = Boolean(d.active);
+      openModal();
+    }
+
+    async function saveDesign() {
+      const payload = {
+        name: document.getElementById('fName').value.trim(),
+        category_id: document.getElementById('fCategoryId').value.trim() || undefined,
+        price: Number(document.getElementById('fPrice').value || 0),
+        stock: Number(document.getElementById('fStock').value || 0),
+        description: document.getElementById('fDescription').value.trim(),
+        active: document.getElementById('fActive').checked,
+      };
+
+      if (!payload.name) {
+        alert('Nombre obligatorio');
+        return;
+      }
+
+      const url = editingId ? `${API_BASE}/designs/${editingId}` : `${API_BASE}/designs`;
+      const method = editingId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: AUTH.getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'No se pudo guardar diseño');
+      }
+
+      closeModal();
+      await fetchDesigns();
+    }
+
+    async function removeDesign(id) {
+      if (!confirm('¿Desactivar diseño?')) return;
+      const response = await fetch(`${API_BASE}/designs/${id}`, {
+        method: 'DELETE',
+        headers: AUTH.getHeaders(),
+      });
+      if (!response.ok) throw new Error('No se pudo desactivar');
+      await fetchDesigns();
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!ensureAdmin()) return;
+      document.getElementById('newBtn').addEventListener('click', openModal);
+      document.getElementById('cancelBtn').addEventListener('click', closeModal);
+      document.getElementById('saveBtn').addEventListener('click', async () => {
+        try { await saveDesign(); } catch (e) { alert(e.message); }
+      });
+      document.getElementById('refreshBtn').addEventListener('click', async () => {
+        try { await fetchDesigns(); } catch (e) { alert(e.message); }
+      });
+      document.getElementById('searchInput').addEventListener('input', render);
+
+      try { await fetchDesigns(); } catch (e) { alert(e.message); }
+    });
+
+    window.openEdit = openEdit;
+    window.removeDesign = async (id) => { try { await removeDesign(id); } catch (e) { alert(e.message); } };
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="es">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Diseños</title>
+  <script src="../src/js/auth.js" defer></script>
+  <script defer>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+        window.location.href = './login.html';
+      }
+    });
+  </script>
   <link href="../src/css/output.css" rel="stylesheet" />
 
   <!-- layout.js inyecta sidebar + header.
