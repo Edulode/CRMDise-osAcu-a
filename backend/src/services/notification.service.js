@@ -248,6 +248,7 @@ async function sendSms({ to, body }) {
 }
 
 module.exports = {
+  isEmailEnabled,
   sendEmail,
   sendOrderConfirmationEmail,
   sendPaymentConfirmedEmail,

@@ -237,4 +237,10 @@ async function handleChargeFailed(charge) {
   }
 }
 
-module.exports = router;
+module.exports = Object.assign(router, {
+  __handlers: {
+    handlePaymentSucceeded,
+    handlePaymentFailed,
+    handleChargeFailed,
+  },
+});

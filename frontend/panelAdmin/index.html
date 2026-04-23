@@ -1,151 +1,5 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard</title>
-  <link href="../src/css/output.css" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <style>
-    body { font-family: 'DM Sans', sans-serif; background: #f5f4f0; color: #1a1a2e; }
-    .card { background: #fff; border: 1px solid #e7e4da; border-radius: 12px; padding: 16px; }
-    .kpi { font-size: 28px; font-weight: 800; }
-    .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-    .side { background: #fff; border-right: 1px solid #e7e4da; padding: 20px; }
-    .side a { display: block; padding: 10px; border-radius: 8px; margin-bottom: 8px; text-decoration: none; color: #6b7280; }
-    .side a.active { background: #1a1a2e; color: #fff; }
-    .main { padding: 24px; }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .side { display: none; } }
-  </style>
-</head>
-<body>
-  <div class="layout">
-    <aside class="side">
-      <h2 style="font-weight:800;margin-bottom:16px;">Admin</h2>
-      <a class="active" href="index.html">Dashboard</a>
-      <a href="pedidos.html">Pedidos</a>
-      <a href="disenos.html">Diseños</a>
-      <a href="clientes.html">Clientes</a>
-    </aside>
-
-    <main class="main">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h1 style="font-size:28px;font-weight:800;">Dashboard</h1>
-        <button id="refreshBtn" style="padding:10px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;">Actualizar</button>
-      </div>
-
-      <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:14px;">
-        <div class="card"><div>Ventas hoy</div><div class="kpi" id="kpiSalesToday">$0</div></div>
-        <div class="card"><div>Ventas semana</div><div class="kpi" id="kpiSalesWeek">$0</div></div>
-        <div class="card"><div>Órdenes pendientes</div><div class="kpi" id="kpiPending">0</div></div>
-        <div class="card"><div>Clientes únicos</div><div class="kpi" id="kpiCustomers">0</div></div>
-      </section>
-
-      <section style="display:grid;grid-template-columns:2fr 1fr;gap:12px;">
-        <div class="card"><h3 style="font-weight:700;margin-bottom:8px;">Ventas últimos 7 días</h3><canvas id="salesChart" height="130"></canvas></div>
-        <div class="card"><h3 style="font-weight:700;margin-bottom:8px;">Estados</h3><canvas id="statusChart" height="130"></canvas></div>
-      </section>
-    </main>
-  </div>
-
-  <script src="../src/js/auth.js"></script>
-  <script>
-    const API_BASE = 'http://localhost:4000/api';
-    let salesChart = null;
-    let statusChart = null;
-
-    function ensureAdmin() {
-      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
-        window.location.href = './login.html';
-        return false;
-      }
-      return true;
-    }
-
-    function currency(v) {
-      return '$' + Number(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 0 });
-    }
-
-    async function loadDashboard() {
-      const response = await fetch(`${API_BASE}/orders`, { headers: AUTH.getHeaders() });
-      if (!response.ok) throw new Error('No se pudo cargar órdenes');
-      const result = await response.json();
-      const orders = result.data || [];
-
-      const today = new Date().toISOString().slice(0, 10);
-      const weekStartDate = new Date();
-      weekStartDate.setDate(weekStartDate.getDate() - 6);
-
-      let salesToday = 0;
-      let salesWeek = 0;
-      let pending = 0;
-
-      const statusCounts = {
-        pending: 0,
-        paid: 0,
-        in_production: 0,
-        shipped: 0,
-        completed: 0,
-        canceled: 0,
-      };
-
-      const dayMap = {};
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        dayMap[d.toISOString().slice(0, 10)] = 0;
-      }
-
-      orders.forEach((o) => {
-        const orderDate = String(o.created_at || '').slice(0, 10);
-        const total = Number(o.total_amount || 0);
-
-        if (orderDate === today) salesToday += total;
-        if (new Date(orderDate) >= weekStartDate) salesWeek += total;
-        if (['pending', 'paid', 'in_production'].includes(o.status)) pending += 1;
-        if (statusCounts[o.status] !== undefined) statusCounts[o.status] += 1;
-        if (dayMap[orderDate] !== undefined) dayMap[orderDate] += total;
-      });
-
-      document.getElementById('kpiSalesToday').textContent = currency(salesToday);
-      document.getElementById('kpiSalesWeek').textContent = currency(salesWeek);
-      document.getElementById('kpiPending').textContent = String(pending);
-      document.getElementById('kpiCustomers').textContent = String(new Set(orders.map((o) => o.customer_email)).size);
-
-      const labels = Object.keys(dayMap).map((d) => new Date(d).toLocaleDateString('es-MX', { weekday: 'short' }));
-      const values = Object.values(dayMap);
-      if (salesChart) salesChart.destroy();
-      if (statusChart) statusChart.destroy();
-
-      salesChart = new Chart(document.getElementById('salesChart'), {
-        type: 'line',
-        data: { labels, datasets: [{ data: values, borderColor: '#B8962E', fill: true, backgroundColor: 'rgba(184,150,46,0.1)' }] },
-        options: { plugins: { legend: { display: false } }, maintainAspectRatio: false }
-      });
-
-      statusChart = new Chart(document.getElementById('statusChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['Pend', 'Pag', 'Prod', 'Env', 'Comp', 'Canc'],
-          datasets: [{ data: Object.values(statusCounts), backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#16a34a', '#dc2626'] }]
-        },
-        options: { maintainAspectRatio: false }
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      if (!ensureAdmin()) return;
-      document.getElementById('refreshBtn').addEventListener('click', async () => {
-        try { await loadDashboard(); } catch (e) { alert(e.message); }
-      });
-      try { await loadDashboard(); } catch (e) { alert(e.message); }
-    });
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="es">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -162,604 +16,521 @@
 
   <link href="../src/css/output.css" rel="stylesheet" />
   <script src="../src/css/sidebar.js" data-active="dashboard" defer></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
   <style>
     :root {
-      --color-sidebar: #1a2232;
-      --color-gold: #c9a84c;
+      --gold: #c9a84c;
+      --surface: #ffffff;
+      --border: #e5e7eb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --bg: #f3f4f6;
     }
-    body { font-family: 'DM Sans', sans-serif; }
 
-    .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.10); }
-
-    /* ── Badges ── */
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-    .badge-pendiente  { background: #fef9c3; color: #a16207; }
-    .badge-produccion { background: #e0f2fe; color: #0369a1; }
-    .badge-enviado    { background: #f3e8ff; color: #7e22ce; }
-    .badge-completado { background: #dcfce7; color: #15803d; }
-
-    .chart-area { position: relative; height: 240px; }
-
-    /* ══════════════════════════════════════
-       DROPDOWN — position:fixed para que
-       nunca quede cortado por overflow
-    ══════════════════════════════════════ */
-    #shared-dropdown {
-      display: none;
-      position: fixed;
-      z-index: 9999;
-      min-width: 148px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.13);
-      overflow: hidden;
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
     }
-    #shared-dropdown.open { display: block; }
-    #shared-dropdown button {
+
+    .page-shell {
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .toolbar {
       display: flex;
       align-items: center;
-      gap: 8px;
-      width: 100%;
-      padding: 10px 14px;
-      font-size: 0.8rem;
-      font-family: 'DM Sans', sans-serif;
-      color: #374151;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      transition: background 0.15s;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
     }
-    #shared-dropdown button:hover { background: #f8fafc; }
-    #shared-dropdown button.danger { color: #ef4444; }
-    #shared-dropdown button.danger:hover { background: #fef2f2; }
 
-    /* ══════════════════════════════════════
-       TABLA RESPONSIVE
-       ≥ 640px → tabla normal con scroll
-       < 640px → cada fila = card (grid 2 col)
-    ══════════════════════════════════════ */
+    .toolbar h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1f2f4a;
+    }
 
-    /* Mobile: convertir filas en cards */
-    @media (max-width: 639px) {
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
 
-      /* Ocultar encabezados */
-      #thead-pedidos { display: none; }
+    .btn:hover { border-color: var(--gold); }
 
-      /* tbody se convierte en bloque */
-      #tabla-pedidos { display: block; padding: 12px; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
 
-      /* Cada <tr> = card */
-      #tabla-pedidos tr {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px 16px;
-        background: #fff;
-        border: 1px solid #f1f5f9;
-        border-radius: 14px;
-        padding: 14px;
-        margin-bottom: 10px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .kpi-card {
+      padding: 14px;
+      border-top: 4px solid var(--gold);
+    }
+
+    .kpi-label {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .kpi-value {
+      margin: 8px 0 0;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .panel {
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #1f2f4a;
+    }
+
+    .chart-box {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      min-height: 300px;
+      max-height: 300px;
+      overflow: hidden;
+    }
+
+    .chart-box.short {
+      height: 300px;
+      min-height: 300px;
+      max-height: 300px;
+    }
+
+    .chart-box canvas {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      display: block;
+    }
+
+    .orders-card { padding: 14px; }
+
+    .orders-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .orders-head h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #1f2f4a;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th {
+      text-align: left;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #eef2f7;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      padding: 0.18rem 0.6rem;
+      font-size: 0.74rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge-warning { background: #fef3c7; color: #a16207; }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+    .badge-neutral { background: #ede9fe; color: #6d28d9; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+
+    #toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 1200;
+      min-width: 240px;
+      max-width: 420px;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 0.84rem;
+      font-weight: 600;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #toast.success { background: #15803d; }
+    #toast.error { background: #b91c1c; }
+
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .chart-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .page-shell { padding: 14px; }
+      .toolbar h1 { font-size: 1.6rem; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .chart-box, .chart-box.short {
+        height: 260px;
+        min-height: 260px;
+        max-height: 260px;
       }
-
-      /* Cada <td> muestra label arriba y valor abajo */
-      #tabla-pedidos td {
-        display: flex;
-        flex-direction: column;
-        padding: 0;
-        border: none !important;
-      }
-      #tabla-pedidos td::before {
-        content: attr(data-label);
-        font-size: 0.68rem;
-        font-weight: 600;
-        color: #9ca3af;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 3px;
-      }
-
-      /* Posición de cada celda en el grid */
-      #tabla-pedidos td[data-label="ID"]      { grid-column: 1; grid-row: 1; font-family: monospace; font-size: 0.75rem; color: #9ca3af; }
-      #tabla-pedidos td[data-label="Cliente"] { grid-column: 2; grid-row: 1; font-weight: 600; }
-      #tabla-pedidos td[data-label="Fecha"]   { grid-column: 1; grid-row: 2; color: #6b7280; font-size: 0.82rem; }
-      #tabla-pedidos td[data-label="Estado"]  { grid-column: 2; grid-row: 2; }
-      #tabla-pedidos td[data-label="Total"]   { grid-column: 1; grid-row: 3; font-weight: 700; font-size: 0.95rem; }
-      #tabla-pedidos td[data-label="Acción"]  { grid-column: 2; grid-row: 3; align-items: flex-end; justify-content: flex-end; }
-
-      /* Quitar text-right heredado en mobile */
-      #tabla-pedidos td { text-align: left !important; }
-
-      /* Sin scroll horizontal en mobile */
-      .table-scroll { overflow-x: visible !important; }
     }
   </style>
 </head>
-
-<body class="bg-slate-100 text-gray-800">
-
-  <main class="flex-1 p-6 space-y-6">
-
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-
-      <!-- Ventas Hoy -->
-      <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-            </svg>
-          </div>
-          <span class="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">+12.5%</span>
-        </div>
-        <p class="text-sm text-gray-500 mb-1">Ventas Hoy</p>
-        <p class="text-2xl font-bold text-gray-900" data-kpi="ventas-hoy">$0</p>
-      </div>
-
-      <!-- Pedidos Pendientes -->
-      <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 01-8 0"/>
-            </svg>
-          </div>
-          <span class="text-xs font-semibold text-blue-500 bg-blue-50 px-2 py-1 rounded-full">+3</span>
-        </div>
-        <p class="text-sm text-gray-500 mb-1">Pedidos Pendientes</p>
-        <p class="text-2xl font-bold text-gray-900" data-kpi="pendientes">0</p>
-      </div>
-
-      <!-- Ingresos Mensuales -->
-      <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-              <polyline points="16 7 22 7 22 13"/>
-            </svg>
-          </div>
-          <span class="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">+18.2%</span>
-        </div>
-        <p class="text-sm text-gray-500 mb-1">Ingresos Mensuales</p>
-        <p class="text-2xl font-bold text-gray-900" data-kpi="ingresos">$0</p>
-      </div>
-
-      <!-- Clientes Nuevos -->
-      <div class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-            </svg>
-          </div>
-          <span class="text-xs font-semibold text-purple-500 bg-purple-50 px-2 py-1 rounded-full">+8</span>
-        </div>
-        <p class="text-sm text-gray-500 mb-1">Clientes Únicos</p>
-        <p class="text-2xl font-bold text-gray-900" data-kpi="clientes">0</p>
-      </div>
-
+<body>
+  <main class="page-shell">
+    <div class="toolbar">
+      <h1>Dashboard</h1>
+      <button id="refreshBtn" class="btn" type="button">Actualizar</button>
     </div>
 
-    <!-- ══ Charts Row ══ -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <section class="kpi-grid">
+      <article class="card kpi-card">
+        <p class="kpi-label">Ventas hoy</p>
+        <p class="kpi-value" id="kpiSalesToday">$0</p>
+      </article>
+      <article class="card kpi-card">
+        <p class="kpi-label">Ventas semana</p>
+        <p class="kpi-value" id="kpiSalesWeek">$0</p>
+      </article>
+      <article class="card kpi-card">
+        <p class="kpi-label">Órdenes pendientes</p>
+        <p class="kpi-value" id="kpiPending">0</p>
+      </article>
+      <article class="card kpi-card">
+        <p class="kpi-label">Clientes únicos</p>
+        <p class="kpi-value" id="kpiCustomers">0</p>
+      </article>
+    </section>
 
-      <!-- Ventas Mensuales -->
-      <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-base font-semibold text-gray-800">Ventas Mensuales</h2>
-          <a href="reportes.html"
-            class="text-sm text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-            Ver reporte
-          </a>
+    <section class="chart-grid">
+      <article class="card panel">
+        <h2>Ventas últimos 7 días</h2>
+        <div class="chart-box">
+          <canvas id="salesChart" width="1200" height="300"></canvas>
         </div>
-        <div class="chart-area">
-          <canvas id="chartVentas"></canvas>
+      </article>
+
+      <article class="card panel">
+        <h2>Estados</h2>
+        <div class="chart-box short">
+          <canvas id="statusChart" width="1200" height="300"></canvas>
         </div>
+      </article>
+    </section>
+
+    <section class="card orders-card">
+      <div class="orders-head">
+        <h2>Pedidos recientes</h2>
       </div>
-
-      <!-- Productos Más Vendidos -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h2 class="text-base font-semibold text-gray-800 mb-6">Productos Más Vendidos</h2>
-        <div class="chart-area">
-          <canvas id="chartProductos"></canvas>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ══ Pedidos Recientes ══ -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <h2 class="text-base font-semibold text-gray-800">Pedidos Recientes</h2>
-        <a href="pedidos.html"
-          class="text-sm text-gray-500 border border-gray-200 px-4 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-          Ver todos
-        </a>
-      </div>
-
-      <!-- table-scroll: scroll horizontal en desktop, desactivado en mobile via CSS -->
-      <div class="table-scroll overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead id="thead-pedidos">
-            <tr class="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-              <th class="px-6 py-3 text-left font-medium">ID</th>
-              <th class="px-6 py-3 text-left font-medium">Cliente</th>
-              <th class="px-6 py-3 text-left font-medium">Fecha</th>
-              <th class="px-6 py-3 text-left font-medium">Estado</th>
-              <th class="px-6 py-3 text-right font-medium">Total</th>
-              <th class="px-6 py-3 text-center font-medium">Acción</th>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Cliente</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Total</th>
             </tr>
           </thead>
-          <tbody id="tabla-pedidos" class="divide-y divide-slate-50"></tbody>
+          <tbody id="ordersBody">
+            <tr><td colspan="5">Cargando...</td></tr>
+          </tbody>
         </table>
       </div>
-
-    </div>
-
+    </section>
   </main>
 
-  <!-- ══ Dropdown compartido — anclado al body con position:fixed ══ -->
-  <div id="shared-dropdown">
-    <button id="dd-edit">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-      </svg>
-      Editar
-    </button>
-    <button id="dd-delete" class="danger">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-      </svg>
-      Eliminar
-    </button>
-  </div>
+  <div id="toast" role="alert" aria-live="polite"></div>
 
-  <!-- ════════════════════════════════
-       CARGAR ÓRDENES REALES DE LA API
-       ════════════════════════════════ -->
   <script>
-
     const API_BASE = 'http://localhost:4000/api';
+    let salesChart = null;
+    let statusChart = null;
+    let toastTimer;
 
-    // Mapeo de estados
-    const statusMap = {
-      'pending':       { label: 'Pendiente',     badge: 'badge-pendiente' },
-      'paid':          { label: 'Pagado',        badge: 'badge-pendiente' },
-      'in_production': { label: 'En producción', badge: 'badge-produccion' },
-      'shipped':       { label: 'Enviado',       badge: 'badge-enviado' },
-      'completed':     { label: 'Completado',    badge: 'badge-completado' },
-      'canceled':      { label: 'Cancelado',     badge: 'bg-red-100 text-red-700' },
-    };
-
-    let pedidosData = [];
-    let estadisticas = {
-      ventasHoy: 0,
-      pendientes: 0,
-      ingresosMax: 0,
-      clientesNuevos: 0,
-    };
-
-    /* ── Cargar órdenes de la API ────────────────── */
-    async function cargarOrdenes() {
-      try {
-        const response = await fetch(`${API_BASE}/orders`, {
-          headers: AUTH.getHeaders(),
-        });
-
-        if (!response.ok) {
-          console.error('Error al cargar órdenes:', response.status);
-          return;
-        }
-
-        const result = await response.json();
-        pedidosData = result.data || [];
-
-        // Procesar estadísticas
-        procesarEstadisticas();
-
-        // Renderizar tabla
-        renderPedidos();
-
-        console.log('✅ Órdenes cargadas:', pedidosData.length);
-      } catch (error) {
-        console.error('❌ Error cargando órdenes:', error);
-      }
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = type;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
     }
 
-    /* ── Procesar estadísticas ────────────────────── */
-    function procesarEstadisticas() {
-      const hoy = new Date().toISOString().split('T')[0];
-      
-      pedidosData.forEach(orden => {
-        const fechaOrden = orden.created_at.split('T')[0];
-        
-        if (fechaOrden === hoy) {
-          estadisticas.ventasHoy += Number(orden.total_amount) || 0;
-        }
-        
-        if (orden.status === 'pending' || orden.status === 'paid') {
-          estadisticas.pendientes += 1;
-        }
-        
-        estadisticas.ingresosMax += Number(orden.total_amount) || 0;
+    const STATUS_META = {
+      pending: { label: 'Pendiente', className: 'badge-warning' },
+      paid: { label: 'Pagado', className: 'badge-success' },
+      in_production: { label: 'Producción', className: 'badge-info' },
+      shipped: { label: 'Enviado', className: 'badge-neutral' },
+      completed: { label: 'Completado', className: 'badge-success' },
+      canceled: { label: 'Cancelado', className: 'badge-danger' },
+    };
+
+    function ensureAdmin() {
+      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+        window.location.href = './login.html';
+        return false;
+      }
+      return true;
+    }
+
+    function money(v) {
+      return '$' + Number(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+    }
+
+    function badgeFor(status) {
+      const meta = STATUS_META[status] || STATUS_META.pending;
+      return '<span class="badge ' + meta.className + '">' + meta.label + '</span>';
+    }
+
+    function getLast7DaysMap() {
+      const map = {};
+      for (let i = 6; i >= 0; i -= 1) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        map[d.toISOString().slice(0, 10)] = 0;
+      }
+      return map;
+    }
+
+    function paintCharts(dayMap, statusCounts) {
+      const salesCanvas = document.getElementById('salesChart');
+      salesCanvas.width = salesCanvas.parentElement?.clientWidth || 1200;
+      salesCanvas.height = 300;
+      salesCanvas.style.width = '100%';
+      salesCanvas.style.height = '300px';
+
+      const statusCanvas = document.getElementById('statusChart');
+      statusCanvas.width = statusCanvas.parentElement?.clientWidth || 1200;
+      statusCanvas.height = 300;
+      statusCanvas.style.width = '100%';
+      statusCanvas.style.height = '300px';
+
+      if (salesChart) salesChart.destroy();
+      if (statusChart) statusChart.destroy();
+
+      const labels = Object.keys(dayMap).map((d) => {
+        const date = new Date(d + 'T00:00:00');
+        return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
       });
+      const values = Object.values(dayMap);
 
-      // Actualizar elementos de KPI
-      document.querySelectorAll('[data-kpi]').forEach(el => {
-        const tipo = el.dataset.kpi;
-        let valor = '';
-        
-        switch(tipo) {
-          case 'ventas-hoy':
-            valor = '$' + estadisticas.ventasHoy.toLocaleString('es-MX', {minimumFractionDigits: 0});
-            break;
-          case 'pendientes':
-            valor = estadisticas.pendientes;
-            break;
-          case 'ingresos':
-            valor = '$' + estadisticas.ingresosMax.toLocaleString('es-MX', {minimumFractionDigits: 0});
-            break;
-          case 'clientes':
-            valor = new Set(pedidosData.map(o => o.customer_id)).size;
-            break;
-        }
-        
-        el.textContent = valor;
-      });
-    }
-
-    /* ── Cargar al abrir la página ───────────────── */
-    document.addEventListener('DOMContentLoaded', async () => {
-      await cargarOrdenes();
-    });
-
-    /* ── Datos para gráficos ────────────────────── */
-    const ventasMensuales = {
-      labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-      data:   [0, 0, 0, 0, 0, 0],
-    };
-
-    const productosVendidos = {
-      labels: ['Productos más solicitados'],
-      data:   [0],
-    };
-          borderColor: '#c9a84c',
-          backgroundColor: 'rgba(201,168,76,0.08)',
-          borderWidth: 2.5,
-          pointBackgroundColor: '#c9a84c',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          tension: 0.4,
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 12, family: 'DM Sans' } } },
-          y: {
-            grid: { color: '#f1f5f9' },
-            ticks: {
-              color: '#9ca3af',
-              font: { size: 11, family: 'DM Sans' },
-              callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v,
-            }
-          }
-        }
-      }
-    });
-
-    new Chart(document.getElementById('chartProductos'), {
-      type: 'bar',
-      data: {
-        labels: productosVendidos.labels,
-        datasets: [{ data: productosVendidos.data, backgroundColor: '#1a2232', borderRadius: 4, borderSkipped: false }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { color: '#f1f5f9' }, ticks: { color: '#9ca3af', font: { size: 11, family: 'DM Sans' } } },
-          y: { grid: { display: false },   ticks: { color: '#374151', font: { size: 11, family: 'DM Sans' } } }
-        }
-      }
-    });
-    }
-
-      // Chart de productos (barra)
-      chartProductos = new Chart(document.getElementById('chartProductos'), {
-        type: 'bar',
+      salesChart = new Chart(salesCanvas, {
+        type: 'line',
         data: {
-          labels: productosVendidos.labels,
-          datasets: [{ data: productosVendidos.data, backgroundColor: '#1a2232', borderRadius: 4, borderSkipped: false }]
+          labels,
+          datasets: [{
+            label: 'Ventas',
+            data: values,
+            borderColor: '#c9a84c',
+            backgroundColor: 'rgba(201, 168, 76, 0.12)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+          }],
         },
         options: {
-          indexAxis: 'y',
-          responsive: true,
+          responsive: false,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: '#f1f5f9' }, ticks: { color: '#9ca3af', font: { size: 11, family: 'DM Sans' } } },
-            y: { grid: { display: false },   ticks: { color: '#374151', font: { size: 11, family: 'DM Sans' } } }
-          }
+            x: { grid: { display: false } },
+            y: { beginAtZero: true },
+          },
+        },
+      });
+
+      statusChart = new Chart(statusCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pend', 'Pag', 'Prod', 'Env', 'Comp', 'Canc'],
+          datasets: [{
+            data: [
+              statusCounts.pending,
+              statusCounts.paid,
+              statusCounts.in_production,
+              statusCounts.shipped,
+              statusCounts.completed,
+              statusCounts.canceled,
+            ],
+            backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#16a34a', '#dc2626'],
+          }],
+        },
+        options: {
+          responsive: false,
+          maintainAspectRatio: false,
+          cutout: '65%',
+          plugins: { legend: { position: 'top' } },
+        },
+      });
+    }
+
+    function paintTable(orders) {
+      const body = document.getElementById('ordersBody');
+      if (!orders.length) {
+        body.innerHTML = '<tr><td colspan="5">Sin órdenes registradas.</td></tr>';
+        return;
+      }
+
+      body.innerHTML = orders.slice(0, 8).map((o) => {
+        const date = new Date(o.created_at).toLocaleDateString('es-MX');
+        return '<tr>' +
+          '<td><strong>' + (o.order_code || '-') + '</strong></td>' +
+          '<td>' + (o.customer_name || o.customer_email || 'Cliente') + '</td>' +
+          '<td>' + date + '</td>' +
+          '<td>' + badgeFor(o.status) + '</td>' +
+          '<td><strong>' + money(o.total_amount) + '</strong></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    async function loadDashboard() {
+      const response = await fetch(API_BASE + '/orders', { headers: AUTH.getHeaders() });
+      if (!response.ok) throw new Error('No se pudo cargar órdenes');
+
+      const result = await response.json();
+      const orders = result.data || [];
+
+      const today = new Date().toISOString().slice(0, 10);
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - 6);
+
+      const dayMap = getLast7DaysMap();
+      const statusCounts = {
+        pending: 0,
+        paid: 0,
+        in_production: 0,
+        shipped: 0,
+        completed: 0,
+        canceled: 0,
+      };
+
+      let salesToday = 0;
+      let salesWeek = 0;
+      let pending = 0;
+
+      orders.forEach((o) => {
+        const dateKey = String(o.created_at || '').slice(0, 10);
+        const total = Number(o.total_amount || 0);
+
+        if (dateKey === today) salesToday += total;
+        if (new Date(dateKey + 'T00:00:00') >= weekStart) salesWeek += total;
+        if (['pending', 'paid', 'in_production'].includes(o.status)) pending += 1;
+
+        if (statusCounts[o.status] !== undefined) {
+          statusCounts[o.status] += 1;
+        }
+
+        if (dayMap[dateKey] !== undefined) {
+          dayMap[dateKey] += total;
         }
       });
+
+      document.getElementById('kpiSalesToday').textContent = money(salesToday);
+      document.getElementById('kpiSalesWeek').textContent = money(salesWeek);
+      document.getElementById('kpiPending').textContent = String(pending);
+      document.getElementById('kpiCustomers').textContent = String(new Set(orders.map((o) => o.customer_email)).size);
+
+      paintCharts(dayMap, statusCounts);
+      paintTable(orders);
     }
 
-    // Inicializar charts cuando el documento esté listo
-    window.addEventListener('DOMContentLoaded', () => {
-      initCharts();
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!ensureAdmin()) return;
 
-    /* ── Badge helper ────────────────────────────── */
-    function badgeClass(estado) {
-      const info = statusMap[estado] || { label: estado, badge: 'bg-gray-100 text-gray-600' };
-      return info.badge;
-    }
-
-    function etiquetaEstado(estado) {
-      const info = statusMap[estado] || { label: estado };
-      return info.label;
-    }
-
-    /* ── Render tabla ────────────────────────────── */
-    function renderPedidos() {
-      const tbody = document.getElementById('tabla-pedidos');
-      tbody.innerHTML = '';
-
-      if (pedidosData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #9ca3af;">Sin órdenes registradas</td></tr>';
-        return;
-      }
-
-      pedidosData.slice(0, 5).forEach((p, idx) => {
-        const fecha = new Date(p.created_at).toLocaleDateString('es-MX');
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50 transition-colors';
-        tr.innerHTML = `
-          <td data-label="ID"      class="px-6 py-3.5 font-mono text-xs text-gray-400">${p.order_code}</td>
-          <td data-label="Cliente" class="px-6 py-3.5 font-medium text-gray-800">${p.customer_name || 'Cliente'}</td>
-          <td data-label="Fecha"   class="px-6 py-3.5 text-gray-500">${fecha}</td>
-          <td data-label="Estado"  class="px-6 py-3.5">
-            <span class="badge ${badgeClass(p.status)}">${etiquetaEstado(p.status)}</span>
-          </td>
-          <td data-label="Total"   class="px-6 py-3.5 text-right font-semibold text-gray-800">$${Number(p.total_amount).toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
-          <td data-label="Acción"  class="px-6 py-3.5 text-center">
-            <button id="btn-${idx}"
-              onclick="abrirDropdown(${idx}, event)"
-              class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-slate-100 transition"
-              title="Acciones">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                <circle cx="10" cy="4"  r="1.5"/>
-                <circle cx="10" cy="10" r="1.5"/>
-                <circle cx="10" cy="16" r="1.5"/>
-              </svg>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
+      document.getElementById('refreshBtn').addEventListener('click', async () => {
+        try {
+          await loadDashboard();
+          showToast('Dashboard actualizado.');
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
       });
-    }
 
-    /* ── Dropdown con position:fixed ─────────────── */
-    // Un solo elemento reutilizable, posicionado con getBoundingClientRect()
-    const dropdown = document.getElementById('shared-dropdown');
-    let activeIdx  = null;
-
-    function abrirDropdown(idx, e) {
-      e.stopPropagation();
-
-      const btn  = document.getElementById(`btn-${idx}`);
-      const rect = btn.getBoundingClientRect();
-      const MENU_W = 148;
-      const MENU_H = 88; // altura aprox. de las 2 opciones
-
-      // Alternar: si ya estaba abierto para este botón, cierra
-      if (dropdown.classList.contains('open') && activeIdx === idx) {
-        dropdown.classList.remove('open');
-        activeIdx = null;
-        return;
-      }
-
-      activeIdx = idx;
-
-      // Posición horizontal: alineado al borde derecho del botón
-      let left = rect.right - MENU_W;
-      if (left < 8) left = 8;
-
-      // Posición vertical: preferir abajo, si no hay espacio abre arriba
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const top = spaceBelow >= MENU_H + 8
-        ? rect.bottom + 4
-        : rect.top - MENU_H - 4;
-
-      dropdown.style.top  = top  + 'px';
-      dropdown.style.left = left + 'px';
-
-      // Vincular acciones al registro actual
-      document.getElementById('dd-edit').onclick = ev => {
-        ev.stopPropagation();
-        dropdown.classList.remove('open');
-        editarPedido(pedidosData[idx].id);
-      };
-      document.getElementById('dd-delete').onclick = ev => {
-        ev.stopPropagation();
-        dropdown.classList.remove('open');
-        eliminarPedido(pedidosData[idx].id, idx);
-      };
-
-      dropdown.classList.add('open');
-    }
-
-    // Cerrar al hacer clic fuera
-    document.addEventListener('click', () => {
-      dropdown.classList.remove('open');
-      activeIdx = null;
-    });
-
-    /* ── Acciones ────────────────────────────────── */
-    function editarPedido(orderCode, idx) {
-      const nuevoEstado = prompt(
-        'Nuevo estado:\npending\npaid\nin_production\nshipped\ncompleted\ncanceled',
-        pedidosData[idx].status
-      );
-
-      if (!nuevoEstado || !statusMap[nuevoEstado]) return;
-
-      // Enviar cambio de estado a la API
-      cambiarEstadoPedido(pedidosData[idx].id, nuevoEstado, orderCode);
-    }
-
-    async function cambiarEstadoPedido(orderId, nuevoEstado, orderCode) {
       try {
-        const response = await fetch(`${API_BASE}/orders/${orderId}/status`, {
-          method: 'PATCH',
-          headers: AUTH.getHeaders(),
-          body: JSON.stringify({ status: nuevoEstado }),
-        });
-
-        if (!response.ok) {
-          alert('Error al actualizar el estado');
-          return;
-        }
-
-        // Actualizar en la vista
-        const idx = pedidosData.findIndex(p => p.id === orderId);
-        if (idx >= 0) {
-          pedidosData[idx].status = nuevoEstado;
-          renderPedidos();
-          alert(`✓ Pedido ${orderCode} actualizado a: ${etiquetaEstado(nuevoEstado)}`);
-        }
+        await loadDashboard();
       } catch (error) {
-        console.error('Error:', error);
-        alert('Error al cambiar el estado');
+        showToast(error.message, 'error');
       }
-    }
-
-    function eliminarPedido(orderCode, idx) {
-      if (confirm(`¿Cancelar el pedido ${orderCode}?`)) {
-        cambiarEstadoPedido(pedidosData[idx].id, 'canceled', orderCode);
-      }
-    }
-
+    });
   </script>
-
 </body>
 </html>

@@ -127,4 +127,50 @@ router.put('/:id', authenticateToken, requireRole(USER_ROLES.ADMIN, USER_ROLES.E
   }
 });
 
+router.delete('/:id', authenticateToken, requireRole(USER_ROLES.ADMIN, USER_ROLES.EDITOR, USER_ROLES.COLLABORATOR), async (req, res, next) => {
+  try {
+    const deleted = await withTransaction(async (client) => {
+      const current = await client.query(
+        `SELECT id, full_name, email
+         FROM customers
+         WHERE id = $1
+         LIMIT 1`,
+        [req.params.id]
+      );
+
+      if (current.rowCount === 0) {
+        const error = new Error('Cliente no encontrado');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const hasOrders = await client.query(
+        `SELECT COUNT(*)::int AS total
+         FROM orders
+         WHERE customer_id = $1`,
+        [req.params.id]
+      );
+
+      if (hasOrders.rows[0].total > 0) {
+        const error = new Error('No se puede eliminar: el cliente tiene pedidos asociados');
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const result = await client.query(
+        `DELETE FROM customers
+         WHERE id = $1
+         RETURNING id, full_name, email`,
+        [req.params.id]
+      );
+
+      return result.rows[0];
+    });
+
+    return res.status(200).json({ data: deleted, message: 'Cliente eliminado correctamente' });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = router;

@@ -207,6 +207,39 @@
       cursor: not-allowed;
     }
 
+    #toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 1200;
+      min-width: 240px;
+      max-width: 420px;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 0.84rem;
+      font-weight: 600;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #toast.success {
+      background: #15803d;
+    }
+
+    #toast.error {
+      background: #b91c1c;
+    }
+
     /* ── Modal ── */
     #modal-overlay {
       display: none;
@@ -558,53 +591,104 @@
     </div>
   </div>
 
+  <div id="toast" role="alert" aria-live="polite"></div>
+
   <!-- ════════════════════════════════
        DATA SIMULADA (reemplazar con backend)
        ════════════════════════════════ -->
   <script>
-
-    /* ── Datos simulados ─────────────────────────── */
-    let usuariosData = [
-      { nombre: 'María', apellidos: 'González', email: 'maria@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '15 Ene 2026', pedidos: 8, estado: 'Activo' },
-      { nombre: 'Carlos', apellidos: 'Ramírez', email: 'carlos@ejemplo.com', telefono: '', rol: 'Empleado', fecha: '10 Ene 2026', pedidos: 0, estado: 'Activo' },
-      { nombre: 'Ana', apellidos: 'Martínez', email: 'ana@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '8 Feb 2026', pedidos: 15, estado: 'Activo' },
-      { nombre: 'Luis', apellidos: 'Hernández', email: 'luis@ejemplo.com', telefono: '', rol: 'Administrador', fecha: '1 Ene 2026', pedidos: 0, estado: 'Activo' },
-      { nombre: 'Sofía', apellidos: 'López', email: 'sofia@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '20 Ene 2026', pedidos: 3, estado: 'Activo' },
-      { nombre: 'Diego', apellidos: 'Torres', email: 'diego@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '5 Feb 2026', pedidos: 1, estado: 'Inactivo' },
-      { nombre: 'Laura', apellidos: 'Sánchez', email: 'laura@ejemplo.com', telefono: '', rol: 'Empleado', fecha: '12 Ene 2026', pedidos: 0, estado: 'Activo' },
-      { nombre: 'Roberto', apellidos: 'Díaz', email: 'roberto@ejemplo.com', telefono: '', rol: 'Cliente', fecha: '28 Ene 2026', pedidos: 5, estado: 'Activo' },
-    ];
+    const API_BASE = 'http://localhost:4000/api';
+    let usuariosData = [];
+    let toastTimer;
 
     const PER_PAGE = 8;
     let currentPage = 1;
     let filtroRol = '';
     let filtroBusq = '';
 
-    /* ── Helpers ─────────────────────────────────── */
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = type;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
+    }
+
+    function toUiCustomer(customer) {
+      const fullName = String(customer.full_name || '').trim();
+      const split = fullName.split(/\s+/).filter(Boolean);
+      const nombre = split[0] || 'Cliente';
+      const apellidos = split.slice(1).join(' ');
+
+      return {
+        id: customer.id,
+        nombre,
+        apellidos,
+        fullName,
+        email: customer.email || '',
+        telefono: customer.phone || '',
+        rol: 'Cliente',
+        fecha: customer.created_at
+          ? new Date(customer.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+          : '-',
+        pedidos: 0,
+        estado: customer.consent_given ? 'Activo' : 'Inactivo',
+        consentGiven: Boolean(customer.consent_given),
+      };
+    }
+
+    async function fetchJson(endpoint, options = {}) {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers: {
+          ...AUTH.getHeaders(),
+          ...(options.headers || {}),
+        },
+      });
+
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(body.message || 'No se pudo completar la solicitud');
+      }
+      return body;
+    }
+
+    async function loadCustomers(query = '') {
+      const q = String(query || '').trim();
+      const result = await fetchJson(`/customers${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+      usuariosData = (result.data || []).map(toUiCustomer);
+      currentPage = 1;
+      renderKPIs();
+      renderTabla();
+    }
+
     function initials(nombre, apellidos) {
-      const n = nombre.trim()[0] || '';
-      const a = apellidos.trim()[0] || '';
-      return (n + a).toUpperCase();
+      const n = String(nombre || '').trim()[0] || '';
+      const a = String(apellidos || '').trim()[0] || '';
+      return (n + a).toUpperCase() || 'CL';
     }
 
     function nombreCompleto(u) {
-      return (u.nombre + ' ' + u.apellidos).trim();
+      return (u.fullName || `${u.nombre} ${u.apellidos}`).trim();
     }
 
     function roleBadge(rol) {
-      const map = { 'Cliente': 'role-cliente', 'Empleado': 'role-empleado', 'Administrador': 'role-administrador' };
+      const map = { Cliente: 'role-cliente', Empleado: 'role-empleado', Administrador: 'role-administrador' };
       return `<span class="role-badge ${map[rol] || ''}">${rol}</span>`;
     }
 
     function estadoBadge(estado) {
       return estado === 'Activo'
-        ? `<span class="estado-activo">Activo</span>`
-        : `<span class="estado-inactivo">Inactivo</span>`;
+        ? '<span class="estado-activo">Activo</span>'
+        : '<span class="estado-inactivo">Inactivo</span>';
     }
 
-    /* ── Filtered list ───────────────────────────── */
     function filteredData() {
-      return usuariosData.filter(u => {
+      return usuariosData.filter((u) => {
         const matchRol = !filtroRol || u.rol === filtroRol;
         const nc = nombreCompleto(u).toLowerCase();
         const matchBusq = !filtroBusq || nc.includes(filtroBusq) || u.email.toLowerCase().includes(filtroBusq);
@@ -612,15 +696,13 @@
       });
     }
 
-    /* ── Render KPIs ─────────────────────────────── */
     function renderKPIs() {
       document.getElementById('kpi-total').textContent = usuariosData.length;
-      document.getElementById('kpi-clientes').textContent = usuariosData.filter(u => u.rol === 'Cliente').length;
-      document.getElementById('kpi-empleados').textContent = usuariosData.filter(u => u.rol === 'Empleado').length;
-      document.getElementById('kpi-admins').textContent = usuariosData.filter(u => u.rol === 'Administrador').length;
+      document.getElementById('kpi-clientes').textContent = usuariosData.length;
+      document.getElementById('kpi-empleados').textContent = 0;
+      document.getElementById('kpi-admins').textContent = 0;
     }
 
-    /* ── Render table ────────────────────────────── */
     function renderTabla() {
       const data = filteredData();
       const total = data.length;
@@ -628,12 +710,11 @@
       if (currentPage > pages) currentPage = pages;
 
       const slice = data.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
-
       const tbody = document.getElementById('tbody-clientes');
       tbody.innerHTML = '';
 
-      if (slice.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-sm text-gray-400">No se encontraron usuarios.</td></tr>`;
+      if (!slice.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-sm text-gray-400">No se encontraron usuarios.</td></tr>';
       } else {
         slice.forEach((u) => {
           const realIdx = usuariosData.indexOf(u);
@@ -674,11 +755,9 @@
         });
       }
 
-      /* ── Pagination info ── */
       const end = Math.min(currentPage * PER_PAGE, total);
       document.getElementById('pag-info').textContent = `Mostrando ${end} de ${total} usuarios`;
 
-      /* ── Pagination buttons ── */
       const pagDiv = document.getElementById('pag-buttons');
       pagDiv.innerHTML = '';
 
@@ -686,12 +765,12 @@
       prevBtn.className = 'page-btn';
       prevBtn.textContent = 'Anterior';
       prevBtn.disabled = currentPage === 1;
-      prevBtn.onclick = () => { currentPage--; renderTabla(); };
+      prevBtn.onclick = () => { currentPage -= 1; renderTabla(); };
       pagDiv.appendChild(prevBtn);
 
-      for (let p = 1; p <= pages; p++) {
+      for (let p = 1; p <= pages; p += 1) {
         const btn = document.createElement('button');
-        btn.className = 'page-btn' + (p === currentPage ? ' active' : '');
+        btn.className = `page-btn${p === currentPage ? ' active' : ''}`;
         btn.textContent = p;
         btn.onclick = () => { currentPage = p; renderTabla(); };
         pagDiv.appendChild(btn);
@@ -701,44 +780,41 @@
       nextBtn.className = 'page-btn';
       nextBtn.textContent = 'Siguiente';
       nextBtn.disabled = currentPage === pages;
-      nextBtn.onclick = () => { currentPage++; renderTabla(); };
+      nextBtn.onclick = () => { currentPage += 1; renderTabla(); };
       pagDiv.appendChild(nextBtn);
     }
 
-    /* ── Search ──────────────────────────────────── */
-    document.getElementById('search-input').addEventListener('input', function () {
+    document.getElementById('search-input').addEventListener('input', async function onSearch() {
       filtroBusq = this.value.toLowerCase().trim();
-      currentPage = 1;
-      renderTabla();
+      try {
+        await loadCustomers(filtroBusq);
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
     });
 
-    /* ── Filter dropdown ─────────────────────────── */
     function selectFilterNative(el) {
       filtroRol = el.value;
       currentPage = 1;
       renderTabla();
     }
 
-    /* ── Modal ───────────────────────────────────── */
     function abrirModal(idx = null) {
       const esEditar = idx !== null;
       document.getElementById('modal-idx').value = esEditar ? idx : '';
       document.getElementById('modal-title').textContent = esEditar ? 'Editar Usuario' : 'Crear Nuevo Usuario';
       document.getElementById('btn-guardar').textContent = esEditar ? 'Guardar Cambios' : 'Crear Usuario';
 
-      // Mostrar/ocultar campos según modo
       document.getElementById('field-telefono').style.display = esEditar ? 'none' : '';
-      document.getElementById('field-password').style.display = esEditar ? 'none' : '';
+      document.getElementById('field-password').style.display = 'none';
       document.getElementById('field-estado').style.display = esEditar ? '' : 'none';
 
       if (esEditar) {
         const u = usuariosData[idx];
-        const partes = u.nombre.split(' ');
-        // Si el nombre ya estaba como nombre completo en versión antigua, lo separamos
         document.getElementById('m-nombre').value = u.nombre || '';
         document.getElementById('m-apellidos').value = u.apellidos || '';
         document.getElementById('m-email').value = u.email;
-        document.getElementById('m-rol').value = u.rol;
+        document.getElementById('m-rol').value = 'Cliente';
         document.getElementById('m-estado').value = u.estado;
       } else {
         document.getElementById('m-nombre').value = '';
@@ -754,45 +830,83 @@
     function cerrarModal() { document.getElementById('modal-overlay').classList.remove('open'); }
     function cerrarModalOverlay(e) { if (e.target === document.getElementById('modal-overlay')) cerrarModal(); }
 
-    function guardarUsuario() {
+    async function guardarUsuario() {
       const nombre = document.getElementById('m-nombre').value.trim();
       const apellidos = document.getElementById('m-apellidos').value.trim();
       const email = document.getElementById('m-email').value.trim();
-      const rol = document.getElementById('m-rol').value;
       const idx = document.getElementById('modal-idx').value;
       const esEditar = idx !== '';
 
-      if (!nombre || !email) { alert('Nombre y email son requeridos.'); return; }
-
-      if (esEditar) {
-        const estado = document.getElementById('m-estado').value;
-        usuariosData[parseInt(idx)] = { ...usuariosData[parseInt(idx)], nombre, apellidos, email, rol, estado };
-      } else {
-        const hoy = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
-        usuariosData.unshift({ nombre, apellidos, email, telefono: document.getElementById('m-telefono').value.trim(), rol, fecha: hoy, pedidos: 0, estado: 'Activo' });
+      if (!nombre || !email) {
+        showToast('Nombre y email son requeridos.', 'error');
+        return;
       }
 
-      cerrarModal();
-      renderKPIs();
-      renderTabla();
+      const fullName = `${nombre} ${apellidos}`.trim();
+
+      try {
+        if (esEditar) {
+          const estado = document.getElementById('m-estado').value;
+          const selected = usuariosData[Number(idx)];
+          await fetchJson(`/customers/${selected.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fullName,
+              email,
+              consentGiven: estado === 'Activo',
+            }),
+          });
+        } else {
+          const phone = document.getElementById('m-telefono').value.trim();
+          await fetchJson('/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fullName,
+              email,
+              phone: phone || null,
+              consentGiven: true,
+            }),
+          });
+        }
+
+        cerrarModal();
+        await loadCustomers(filtroBusq);
+        showToast(esEditar ? 'Cliente actualizado correctamente.' : 'Cliente creado correctamente.');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
     }
 
-    /* ── Edit / Delete ───────────────────────────── */
     function editarUsuario(idx) { abrirModal(idx); }
 
-    function eliminarUsuario(idx) {
-      const u = usuariosData[idx];
-      if (confirm(`¿Eliminar a ${nombreCompleto(u)}?`)) {
-        usuariosData.splice(idx, 1);
-        renderKPIs();
-        renderTabla();
+    async function eliminarUsuario(idx) {
+      const selected = usuariosData[idx];
+      if (!selected) return;
+
+      if (!confirm(`¿Eliminar a ${nombreCompleto(selected)}?`)) {
+        return;
+      }
+
+      try {
+        await fetchJson(`/customers/${selected.id}`, {
+          method: 'DELETE',
+        });
+        await loadCustomers(filtroBusq);
+        showToast('Cliente eliminado correctamente.');
+      } catch (error) {
+        showToast(error.message, 'error');
       }
     }
 
-    /* ── Init ────────────────────────────────────── */
-    renderKPIs();
-    renderTabla();
-
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await loadCustomers('');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
   </script>
 
 </body>

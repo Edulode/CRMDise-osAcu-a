@@ -337,4 +337,15 @@
   document.getElementById("da-overlay").addEventListener("click", () => {
     window.daToggleSidebar();
   });
+
+  const logoutLink = document.querySelector('.da-logout');
+  if (logoutLink) {
+    logoutLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (typeof window.AUTH?.logout === 'function') {
+        window.AUTH.logout();
+      }
+      window.location.href = './login.html';
+    });
+  }
 })();

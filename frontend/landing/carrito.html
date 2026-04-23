@@ -686,16 +686,15 @@ function resolveImageUrl(src) {
 }
 
 /* ════════════════════════════════════════════════════
-   CARRITO — localStorage
-   TODO (con BD): reemplazar getCart/saveCart por
-   fetch GET /api/carrito  y  DELETE /api/carrito/:id
+   CARRITO — persistencia temporal en localStorage
+   Nota: se mantiene local hasta implementar carrito en API.
 ════════════════════════════════════════════════════ */
-function getCart() {
+function loadCart() {
     try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
     catch { return []; }
 }
 
-function saveCart(cart) {
+function persistCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
     const total = cart.reduce((s, i) => s + i.cantidad, 0);
     if (typeof window.daUpdateCart === 'function') window.daUpdateCart(total);
@@ -706,7 +705,7 @@ function saveCart(cart) {
    RENDER ITEMS DEL CARRITO
 ════════════════════════════════════════════════════ */
 function renderCart() {
-    const cart      = getCart();
+    const cart      = loadCart();
     const container = document.getElementById('cart-items-container');
     const btnCont   = document.getElementById('btn-continuar-1');
 
@@ -762,9 +761,9 @@ function renderCart() {
             const idx  = +this.dataset.idx;
             const qty  = Math.max(1, parseInt(this.value) || 1);
             this.value = qty;
-            const cart = getCart();
+            const cart = loadCart();
             cart[idx].cantidad = qty;
-            saveCart(cart);
+            persistCart(cart);
             document.getElementById(`subtotal-${idx}`).textContent = '$' + (cart[idx].precio * qty);
             renderSummary(cart);
         });
@@ -774,9 +773,9 @@ function renderCart() {
     container.querySelectorAll('.cart-delete').forEach(btn => {
         btn.addEventListener('click', function () {
             const idx  = +this.dataset.idx;
-            const cart = getCart();
+            const cart = loadCart();
             cart.splice(idx, 1);
-            saveCart(cart);
+            persistCart(cart);
             renderCart();
             showToast('Producto eliminado del carrito');
         });
@@ -908,7 +907,7 @@ function validatePago() {
    EVENTOS PRINCIPALES
 ════════════════════════════════════════════════════ */
 document.getElementById('btn-continuar-1').addEventListener('click', () => {
-    const cart = getCart();
+    const cart = loadCart();
     if (cart.length === 0) { showToast('⚠ Tu carrito está vacío'); return; }
     const checkoutCart = {
         items: cart.map((item) => ({
@@ -951,7 +950,7 @@ async function crearPedido() {
         const cp = document.getElementById('d-cp').value.trim();
 
         // Recuperar carrito
-        const cart = getCart();
+        const cart = loadCart();
         if (cart.length === 0) {
             showToast('⚠ Tu carrito está vacío');
             btnConfirmar.disabled = false;
@@ -1003,9 +1002,7 @@ async function crearPedido() {
         document.getElementById('confirm-email').textContent = order.customer.email;
 
         // Limpiar carrito
-        localStorage.removeItem(CART_KEY);
-        if (typeof window.daUpdateCart === 'function') window.daUpdateCart(0);
-        else sessionStorage.setItem('da_cart_count', '0');
+        persistCart([]);
 
         showToast('✓ ¡Pedido confirmado!');
         goToStep(4);
@@ -1049,7 +1046,7 @@ function showToast(msg) {
 renderCart();
 
 /* Sincroniza badge del carrito al cargar */
-const initCart = getCart();
+const initCart = loadCart();
 const initCount = initCart.reduce((s, i) => s + i.cantidad, 0);
 /* navbar.js ya recupera da_cart_count de sessionStorage al cargar,
    pero aquí forzamos con el valor real del localStorage */

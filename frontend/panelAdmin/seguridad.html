@@ -419,6 +419,95 @@
       line-height: 1.5;
     }
 
+    /* ─────────── ACTIVITY ─────────── */
+    .activity-list {
+      list-style: none;
+      padding: 14px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .activity-item {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .activity-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .activity-title {
+      font-size: 0.81rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .activity-meta {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .activity-time {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .activity-empty {
+      padding: 16px 18px 20px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .mail-status {
+      padding: 14px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .mail-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      font-size: 0.74rem;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
+    .mail-pill.ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .mail-pill.off {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .mail-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
     /* ─────────── TOAST ─────────── */
     #toast {
       position: fixed;
@@ -525,7 +614,7 @@
         </div>
         <div class="card-header-text">
           <h2>Cambiar contraseña</h2>
-          <p>Usa al menos 8 caracteres con letras y números</p>
+          <p>Usa al menos 8 caracteres con mayúsculas y números</p>
         </div>
       </div>
 
@@ -584,7 +673,7 @@
             <span id="req-len" class="req-item"><span class="req-dot">○</span> 8+ caracteres</span>
             <span id="req-upp" class="req-item"><span class="req-dot">○</span> Mayúscula</span>
             <span id="req-num" class="req-item"><span class="req-dot">○</span> Número</span>
-            <span id="req-spec" class="req-item"><span class="req-dot">○</span> Carácter especial</span>
+            <span id="req-spec" class="req-item"><span class="req-dot">○</span> Carácter especial (opcional)</span>
           </div>
         </div>
 
@@ -636,14 +725,50 @@
       </div>
     </div>
 
+    <div class="card" style="animation-delay:0.15s">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2a4 4 0 014-4h7" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h9" />
+          </svg>
+        </div>
+        <div class="card-header-text">
+          <h2>Bitácora reciente</h2>
+          <p>Últimos cambios realizados desde tu cuenta</p>
+        </div>
+      </div>
+      <div id="activityContainer">
+        <p class="activity-empty">Cargando actividad...</p>
+      </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.2s">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 6 9-6" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div class="card-header-text">
+          <h2>Correos transaccionales</h2>
+          <p>Verifica configuración y envía un correo de prueba</p>
+        </div>
+      </div>
+      <div class="mail-status">
+        <span id="mailStatusPill" class="mail-pill off">No configurado</span>
+        <p id="mailMeta" class="mail-meta">Cargando estado de correo...</p>
+        <div>
+          <button id="btnMailTest" type="button" class="btn btn-primary">Enviar correo de prueba</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script>
-    const MOCK_USERS = [
-      { id: 1, email: 'admin@ejemplo.com', password: 'Admin123' },
-      { id: 2, email: 'usuario@ejemplo.com', password: 'User456@' },
-    ];
-    const CURRENT_USER_ID = 1;
+    const API_BASE = 'http://localhost:4000/api';
 
     function toggleVisibility(inputId, btn) {
       const input = document.getElementById(inputId);
@@ -706,11 +831,9 @@
 
     function validateForm(currentVal, newVal, confirmVal) {
       let valid = true;
-      const user = MOCK_USERS.find(u => u.id === CURRENT_USER_ID);
+
       if (!currentVal) {
         valid = setFieldState('currentPassword', 'currentPasswordError', 'Ingresa tu contraseña actual') && valid;
-      } else if (currentVal !== user.password) {
-        valid = setFieldState('currentPassword', 'currentPasswordError', 'La contraseña actual es incorrecta') && valid;
       } else { setFieldState('currentPassword', 'currentPasswordError', ''); }
 
       if (!newVal) {
@@ -728,6 +851,24 @@
       } else { setFieldState('confirmPassword', 'confirmPasswordError', ''); }
 
       return valid;
+    }
+
+    async function changePassword(currentPassword, newPassword) {
+      const response = await fetch(`${API_BASE}/auth/change-password`, {
+        method: 'POST',
+        headers: AUTH.getHeaders(),
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(body.message || 'No se pudo actualizar la contraseña');
+      }
+
+      return body;
     }
 
     let toastTimeout;
@@ -753,15 +894,30 @@
       document.getElementById('submitText').textContent = 'Guardando…';
       document.getElementById('submitSpinner').classList.add('visible');
 
-      await new Promise(r => setTimeout(r, 1400));
-      const user = MOCK_USERS.find(u => u.id === CURRENT_USER_ID);
-      user.password = newVal;
+      try {
+        await changePassword(currentVal, newVal);
 
-      btn.disabled = false;
-      document.getElementById('submitText').textContent = 'Guardar cambios';
-      document.getElementById('submitSpinner').classList.remove('visible');
-      resetForm();
-      showToast('Contraseña actualizada correctamente');
+        btn.disabled = false;
+        document.getElementById('submitText').textContent = 'Guardar cambios';
+        document.getElementById('submitSpinner').classList.remove('visible');
+        resetForm();
+        showToast('Contraseña actualizada. Redirigiendo al login...');
+
+        setTimeout(() => {
+          AUTH.logout();
+          window.location.href = './login.html';
+        }, 1300);
+      } catch (error) {
+        btn.disabled = false;
+        document.getElementById('submitText').textContent = 'Guardar cambios';
+        document.getElementById('submitSpinner').classList.remove('visible');
+
+        if (String(error.message).toLowerCase().includes('actual')) {
+          setFieldState('currentPassword', 'currentPasswordError', error.message);
+        } else {
+          showToast(error.message, 'error');
+        }
+      }
     });
 
     function resetForm() {
@@ -777,11 +933,121 @@
       ['s1', 's2', 's3', 's4'].forEach(id => document.getElementById(id).style.backgroundColor = '');
     }
 
+    function statusLabel(status) {
+      const map = {
+        pending: 'pendiente',
+        paid: 'pagado',
+        in_production: 'en producción',
+        shipped: 'enviado',
+        completed: 'completado',
+        canceled: 'cancelado',
+      };
+      return map[status] || status || 'sin estado';
+    }
+
+    function formatDateTime(value) {
+      return new Date(value).toLocaleString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    async function loadActivity() {
+      const container = document.getElementById('activityContainer');
+      try {
+        const response = await fetch(`${API_BASE}/auth/activity`, { headers: AUTH.getHeaders() });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(body.message || 'No se pudo cargar la actividad');
+        }
+
+        const data = body.data || [];
+        if (!data.length) {
+          container.innerHTML = '<p class="activity-empty">Aún no hay actividad registrada para esta cuenta.</p>';
+          return;
+        }
+
+        container.innerHTML = `<ul class="activity-list">${data.map((item) => {
+          const title = item.title
+            ? item.title
+            : `Pedido ${item.order_code}: ${statusLabel(item.from_status)} → ${statusLabel(item.to_status)}`;
+          const meta = item.description || item.notes || 'Actividad registrada';
+          return `
+            <li class="activity-item">
+              <div class="activity-main">
+                <p class="activity-title">${title}</p>
+                <p class="activity-meta">${meta}</p>
+              </div>
+              <span class="activity-time">${formatDateTime(item.created_at)}</span>
+            </li>
+          `;
+        }).join('')}</ul>`;
+      } catch (error) {
+        container.innerHTML = `<p class="activity-empty">${error.message}</p>`;
+      }
+    }
+
+    async function loadMailStatus() {
+      const pill = document.getElementById('mailStatusPill');
+      const meta = document.getElementById('mailMeta');
+      try {
+        const response = await fetch(`${API_BASE}/auth/notifications/status`, { headers: AUTH.getHeaders() });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(body.message || 'No se pudo cargar estado de correo');
+        }
+
+        const enabled = Boolean(body.data?.emailEnabled);
+        const fromEmail = body.data?.fromEmail || 'no definido';
+        pill.className = `mail-pill ${enabled ? 'ok' : 'off'}`;
+        pill.textContent = enabled ? 'Configurado' : 'No configurado';
+        meta.textContent = `Proveedor: SendGrid · Remitente: ${fromEmail}`;
+      } catch (error) {
+        pill.className = 'mail-pill off';
+        pill.textContent = 'Error';
+        meta.textContent = error.message;
+      }
+    }
+
+    async function sendTestMail() {
+      const button = document.getElementById('btnMailTest');
+      button.disabled = true;
+      button.textContent = 'Enviando...';
+      try {
+        const response = await fetch(`${API_BASE}/auth/notifications/test`, {
+          method: 'POST',
+          headers: AUTH.getHeaders(),
+          body: JSON.stringify({}),
+        });
+
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(body.message || 'No se pudo enviar correo de prueba');
+        }
+
+        showToast(body.message || 'Correo de prueba enviado.');
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Enviar correo de prueba';
+      }
+    }
+
     document.getElementById('confirmPassword').addEventListener('input', function () {
       const newVal = document.getElementById('newPassword').value;
       if (!this.value) return;
       if (this.value !== newVal) setFieldState('confirmPassword', 'confirmPasswordError', 'Las contraseñas no coinciden');
       else setFieldState('confirmPassword', 'confirmPasswordError', '');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadActivity();
+      loadMailStatus();
+      document.getElementById('btnMailTest').addEventListener('click', sendTestMail);
     });
   </script>
 </body>

@@ -23,6 +23,7 @@ services:
       context: ./backend
     container_name: disenos_acuna_backend
     restart: unless-stopped
+    command: sh -c "npm run db:init && npm start"
     depends_on:
       db:
         condition: service_healthy
@@ -50,6 +51,8 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
     container_name: disenos_acuna_frontend
     restart: unless-stopped
     depends_on:

@@ -16,7 +16,17 @@ const loginSchema = z.object({
   password: z.string().min(1, 'La contraseña es obligatoria'),
 });
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'La contraseña actual es obligatoria'),
+  newPassword: z
+    .string()
+    .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
+    .regex(/[A-Z]/, 'La nueva contraseña debe incluir una mayúscula')
+    .regex(/[0-9]/, 'La nueva contraseña debe incluir un número'),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
+  changePasswordSchema,
 };

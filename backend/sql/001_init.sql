@@ -44,6 +44,18 @@ CREATE TABLE IF NOT EXISTS users (
   CONSTRAINT users_customer_id_fk FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS security_audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  email VARCHAR(160),
+  action VARCHAR(80) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  ip_address VARCHAR(64),
+  user_agent TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(120) NOT NULL UNIQUE,
@@ -145,6 +157,8 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer_created ON orders(customer_id, cr
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_order_history_order ON order_status_history(order_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_payments_order ON payments(order_id);
+CREATE INDEX IF NOT EXISTS idx_security_audit_user_created ON security_audit_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_security_audit_email_created ON security_audit_logs(email, created_at DESC);
 
 INSERT INTO categories (name, slug, description)
 VALUES
