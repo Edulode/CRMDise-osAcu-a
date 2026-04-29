@@ -51,7 +51,7 @@
                 await AUTH.login('test@disenosacuna.com', 'TestPassword123');
 
                 status.textContent = 'Obteniendo catálogo para crear carrito...';
-                const res = await fetch('http://localhost:4000/api/catalog/designs');
+                const res = await fetch('/api/catalog/designs');
                 const data = await res.json();
                 const design = data.data && data.data[0];
 

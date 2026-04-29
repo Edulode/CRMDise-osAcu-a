@@ -5,7 +5,7 @@
 
 // Configuración
 const ADMIN_CONFIG = {
-    API_BASE: 'http://localhost:4000/api',
+    API_BASE: '/api',
     TOAST_DURATION: 3000,
     DEBOUNCE_DELAY: 300,
 };
@@ -35,7 +35,7 @@ const AdminInit = {
         }
         
         const user = AUTH.getUser?.();
-        if (user?.role !== 'admin' && user?.role !== 'editor' && user?.role !== 'collaborator') {
+            if (user?.role !== 'admin' && user?.role !== 'gerente' && user?.role !== 'colaborador') {
             window.location.href = './login.html';
             return false;
         }

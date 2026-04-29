@@ -1,0 +1,50 @@
+{
+  "id": null,
+  "uid": "disenos-acuna-ops",
+  "title": "Diseños Acuña - Operational Overview",
+  "tags": ["operations", "backend"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Backend UP",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "targets": [{"expr": "up{job=\"backend\"}", "refId": "A"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "type": "stat",
+      "title": "DB UP",
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+      "targets": [{"expr": "db_up", "refId": "A"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}}
+    },
+    {
+      "type": "timeseries",
+      "title": "DB Latency (ms)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [{"expr": "db_latency_ms", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Heap Used (bytes)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "targets": [{"expr": "app_memory_heap_used_bytes", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "RSS (bytes)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [{"expr": "app_memory_rss_bytes", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "App Uptime (seconds)",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14},
+      "targets": [{"expr": "app_uptime_seconds", "refId": "A"}]
+    }
+  ]
+}

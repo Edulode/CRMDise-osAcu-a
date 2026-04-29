@@ -31,7 +31,14 @@ const orderStatusSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+const orderUpdateSchema = z.object({
+  status: z.enum(Object.values(ORDER_STATUSES)).optional(),
+  shippingAmount: z.coerce.number().nonnegative().optional(),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
+
 module.exports = {
   checkoutSchema,
   orderStatusSchema,
+  orderUpdateSchema,
 };

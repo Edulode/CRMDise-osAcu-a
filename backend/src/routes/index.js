@@ -7,6 +7,8 @@ const reportsRoutes = require('./reports.routes');
 const uploadsRoutes = require('./uploads.routes');
 const webhooksRoutes = require('./webhooks.routes');
 const designsRoutes = require('./designs.routes');
+const openapiRoutes = require('./openapi.routes');
+const usersRoutes = require('./users.routes');
 
 module.exports = {
   healthRoutes,
@@ -18,4 +20,6 @@ module.exports = {
   uploadsRoutes,
   webhooksRoutes,
   designsRoutes,
+  openapiRoutes,
+  usersRoutes,
 };

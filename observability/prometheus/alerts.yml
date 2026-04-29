@@ -1,0 +1,38 @@
+groups:
+  - name: disenos-acuna-alerts
+    rules:
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend fuera de línea"
+          description: "El target backend:4000 no responde en /metrics"
+
+      - alert: DatabaseUnhealthy
+        expr: db_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Base de datos no disponible"
+          description: "La métrica db_up reporta 0"
+
+      - alert: HighDatabaseLatency
+        expr: db_latency_ms > 500
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia alta de base de datos"
+          description: "db_latency_ms mayor a 500ms por más de 2 minutos"
+
+      - alert: HighMemoryUsage
+        expr: app_memory_heap_used_bytes > 350000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Uso alto de memoria heap"
+          description: "El heap del backend superó el umbral configurado"

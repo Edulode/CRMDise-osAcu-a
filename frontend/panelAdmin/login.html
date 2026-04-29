@@ -438,7 +438,8 @@
             <select id="role" class="input-field" style="padding-left: 38px;">
               <option value="">Selecciona un rol</option>
               <option value="admin">Administrador</option>
-              <option value="employee">Empleado</option>
+              <option value="gerente">Gerente</option>
+              <option value="colaborador">Colaborador</option>
             </select>
             <div class="select-arrow">
               <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -469,9 +470,14 @@
 
   <script src="../src/js/auth.js"></script>
   <script>
-    // Redirigir si ya está autenticado
-    if (AUTH.isAuthenticated()) {
+    const STAFF_ROLES = ['admin', 'gerente', 'colaborador'];
+
+    // Redirigir solo si la sesión local sigue siendo válida y es de staff
+    const currentUser = AUTH.getUser();
+    if (AUTH.isAuthenticated() && !AUTH.isTokenExpired() && STAFF_ROLES.includes(currentUser?.role)) {
       window.location.href = './index.html';
+    } else {
+      AUTH.clearSession?.();
     }
 
     document.getElementById('year').textContent = new Date().getFullYear();
@@ -588,10 +594,10 @@
         const user = AUTH.getUser();
         
         // Redirigir según el rol
-        if (user?.role === 'admin' || user?.role === 'employee') {
+        if (['admin', 'gerente', 'colaborador'].includes(user?.role)) {
           window.location.href = './index.html';
         } else {
-          // Si el usuario no es admin/employee, enviarlo al landing
+          // Si el usuario no es de staff, enviarlo al landing
           AUTH.logout();
           document.getElementById('errorMsg').textContent = 'Tu cuenta no tiene acceso al panel. Accede como cliente en el sitio principal.';
           document.getElementById('errorBanner').classList.add('visible');

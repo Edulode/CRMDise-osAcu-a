@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { env } = require('../config/env');
 const { USER_ROLES } = require('../config/constants');
+const { isAccessTokenRevoked } = require('../services/security.service');
 
 function extractToken(authorization) {
   if (!authorization) {
@@ -15,7 +16,7 @@ function extractToken(authorization) {
   return token;
 }
 
-function optionalAuth(req, _res, next) {
+async function optionalAuth(req, _res, next) {
   const token = extractToken(req.headers.authorization);
   if (!token) {
     req.user = null;
@@ -23,7 +24,13 @@ function optionalAuth(req, _res, next) {
   }
 
   try {
-    req.user = jwt.verify(token, env.jwtSecret);
+    const payload = jwt.verify(token, env.jwtSecret);
+    if (await isAccessTokenRevoked(payload.jti)) {
+      req.user = null;
+      return next();
+    }
+
+    req.user = payload;
   } catch (_error) {
     req.user = null;
   }
@@ -31,14 +38,19 @@ function optionalAuth(req, _res, next) {
   return next();
 }
 
-function authenticateToken(req, res, next) {
+async function authenticateToken(req, res, next) {
   const token = extractToken(req.headers.authorization);
   if (!token) {
     return res.status(401).json({ message: 'Token requerido' });
   }
 
   try {
-    req.user = jwt.verify(token, env.jwtSecret);
+    const payload = jwt.verify(token, env.jwtSecret);
+    if (await isAccessTokenRevoked(payload.jti)) {
+      return res.status(401).json({ message: 'Token revocado' });
+    }
+
+    req.user = payload;
     return next();
   } catch (_error) {
     return res.status(401).json({ message: 'Token inválido o expirado' });
@@ -64,7 +76,7 @@ function requireRole(...allowedRoles) {
 /**
  * Middleware para validar que un usuario ownea una orden
  * Extrae el orderId del parámetro :id y verifica propiedad
- * - Admin/Editor/Collaborator: acceso a cualquier orden
+ * - Admin/gerente/colaborador: acceso a cualquier orden
  * - Customer: solo acceso a órdenes propias (customer_id debe coincidir con JWT claim)
  *
  * Uso: router.get('/:id', authenticateToken, requireOwnershipOrder(pool), ...)
@@ -79,7 +91,7 @@ function requireOwnershipOrder(pool) {
         return res.status(401).json({ message: 'Autenticación requerida' });
       }
 
-      // Admin/Editor/Collaborator pueden acceder a cualquier orden
+          // Admin/gerente/colaborador pueden acceder a cualquier orden
       if (user.role !== USER_ROLES.CUSTOMER) {
         return next();
       }
