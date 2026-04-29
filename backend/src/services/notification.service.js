@@ -150,6 +150,8 @@ function getPaymentConfirmedTemplate(orderCode, customerName, total) {
 }
 
 function getShipmentNotificationTemplate(orderCode, customerName, trackingNumber, carrier) {
+  const safeTracking = trackingNumber || 'Pendiente de asignar';
+  const safeCarrier = carrier || 'Transportista por definir';
   return `
     <!DOCTYPE html>
     <html>
@@ -180,15 +182,54 @@ function getShipmentNotificationTemplate(orderCode, customerName, trackingNumber
             <div class="details">
               <h3 style="margin-top: 0; color: #0ea5e9;">Información de Envío</h3>
               <p><strong>Código de Orden:</strong> ${orderCode}</p>
-              <p><strong>Transportista:</strong> ${carrier || 'Fedex'}</p>
+              <p><strong>Transportista:</strong> ${safeCarrier}</p>
               <div class="tracking" style="text-align: center;">
-                Rastreo: ${trackingNumber}
+                Rastreo: ${safeTracking}
               </div>
             </div>
             
             <p>Ingresa a la página del transportista para obtener detalles de tu envío y horario de entrega estimado.</p>
             
             <p>¡Gracias por tu compra!</p>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 Diseños Acuña. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+function getOrderStatusUpdateTemplate(orderCode, customerName, statusLabel) {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: 'DM Sans', 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #1a2232, #2d3a4f); color: #fff; padding: 30px; border-radius: 8px 8px 0 0; }
+          .content { background: #f8f7f4; padding: 30px; border-radius: 0 0 8px 8px; }
+          .status-box { background: #fff; padding: 16px; border-radius: 6px; border-left: 4px solid #c9a84c; margin: 16px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin:0;font-size:26px;">Actualización de pedido</h1>
+            <p style="margin: 10px 0 0 0;">Diseños Acuña</p>
+          </div>
+          <div class="content">
+            <p>Hola <strong>${customerName}</strong>,</p>
+            <p>Tu pedido ha cambiado de estado.</p>
+            <div class="status-box">
+              <p style="margin:0;"><strong>Pedido:</strong> ${orderCode}</p>
+              <p style="margin:8px 0 0;"><strong>Nuevo estado:</strong> ${statusLabel}</p>
+            </div>
+            <p>Si tienes dudas, responde a este correo y te apoyamos.</p>
           </div>
           <div class="footer">
             <p>&copy; 2026 Diseños Acuña. Todos los derechos reservados.</p>
@@ -227,6 +268,14 @@ async function sendShipmentNotificationEmail({ to, orderCode, customerName, trac
   });
 }
 
+async function sendOrderStatusUpdateEmail({ to, orderCode, customerName, statusLabel }) {
+  return sendEmail({
+    to,
+    subject: `Actualización de estado - Pedido ${orderCode}`,
+    html: getOrderStatusUpdateTemplate(orderCode, customerName, statusLabel),
+  });
+}
+
 async function sendSms({ to, body }) {
   if (!twilioClient || !env.twilioFromNumber) {
     console.log('⚠️  SMS disabled - skipping');
@@ -253,5 +302,6 @@ module.exports = {
   sendOrderConfirmationEmail,
   sendPaymentConfirmedEmail,
   sendShipmentNotificationEmail,
+  sendOrderStatusUpdateEmail,
   sendSms,
 };

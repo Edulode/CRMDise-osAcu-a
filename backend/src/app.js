@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const { env } = require('./config/env');
+const { requestLogger } = require('./middleware/requestLogger');
 const {
   healthRoutes,
   authRoutes,
@@ -13,6 +14,8 @@ const {
   uploadsRoutes,
   webhooksRoutes,
   designsRoutes,
+  openapiRoutes,
+  usersRoutes,
 } = require('./routes');
 const { notFound } = require('./middleware/notFound');
 const { errorHandler } = require('./middleware/errorHandler');
@@ -20,6 +23,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 const app = express();
 
 app.use(helmet());
+app.use(requestLogger);
 app.use(
   cors({
     origin: env.corsOrigin === '*' ? true : env.corsOrigin.split(',').map((item) => item.trim()),
@@ -42,12 +46,14 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/uploads', uploadsRoutes);
 app.use('/api/designs', designsRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api', openapiRoutes);
 
 app.get('/api', (_req, res) => {
   return res.status(200).json({
     name: 'Diseños Acuña API',
     version: '1.0.0',
-    modules: ['auth', 'catalog', 'customers', 'orders', 'reports', 'inventory'],
+    modules: ['auth', 'catalog', 'customers', 'orders', 'reports', 'inventory', 'users', 'openapi'],
   });
 });
 

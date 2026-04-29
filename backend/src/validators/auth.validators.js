@@ -14,6 +14,7 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, 'La contraseña es obligatoria'),
+  twoFactorCode: z.string().trim().regex(/^[0-9]{6}$/, 'El código 2FA debe tener 6 dígitos').optional(),
 });
 
 const changePasswordSchema = z.object({
@@ -25,8 +26,33 @@ const changePasswordSchema = z.object({
     .regex(/[0-9]/, 'La nueva contraseña debe incluir un número'),
 });
 
+const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'El refresh token es obligatorio'),
+});
+
+const passwordResetRequestSchema = z.object({
+  email: emailSchema,
+});
+
+const passwordResetConfirmSchema = z.object({
+  token: z.string().min(1, 'El token es obligatorio'),
+  newPassword: z
+    .string()
+    .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
+    .regex(/[A-Z]/, 'La nueva contraseña debe incluir una mayúscula')
+    .regex(/[0-9]/, 'La nueva contraseña debe incluir un número'),
+});
+
+const twoFactorVerifySchema = z.object({
+  code: z.string().trim().regex(/^[0-9]{6}$/, 'El código 2FA debe tener 6 dígitos'),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
   changePasswordSchema,
+  refreshTokenSchema,
+  passwordResetRequestSchema,
+  passwordResetConfirmSchema,
+  twoFactorVerifySchema,
 };

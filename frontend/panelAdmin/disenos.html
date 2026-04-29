@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Diseños | Diseños Acuña</title>
   <script src="../src/js/auth.js" defer></script>
+  <script src="../src/js/confirm-dialog.js" defer></script>
   <script defer>
     window.addEventListener('DOMContentLoaded', () => {
-      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+      if (!AUTH.isAuthenticated() || !['admin', 'gerente', 'colaborador'].includes(AUTH.getUser()?.role)) {
         window.location.href = './login.html';
       }
     });
@@ -67,6 +68,8 @@
     .btn:hover { border-color: var(--gold); }
     .btn-primary { background: var(--gold); color: #1f2f4a; border-color: var(--gold); }
     .btn-danger { border-color: #fecaca; color: var(--danger); }
+    .btn-success { border-color: #bbf7d0; color: #15803d; background: #f0fdf4; }
+    .btn-success:hover { border-color: #86efac; background: #dcfce7; }
 
     .kpi-grid {
       display: grid;
@@ -356,7 +359,7 @@
   <div id="toast" role="alert" aria-live="polite"></div>
 
   <script>
-    const API_BASE = 'http://localhost:4000/api';
+    const API_BASE = '/api';
     let designs = [];
     let editingId = null;
     let toastTimer;
@@ -374,7 +377,7 @@
     }
 
     function ensureAdmin() {
-      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+      if (!AUTH.isAuthenticated() || !['admin', 'gerente', 'colaborador'].includes(AUTH.getUser()?.role)) {
         window.location.href = './login.html';
         return false;
       }
@@ -385,20 +388,23 @@
       return '$' + Number(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
     }
 
-    function fetchJson(endpoint, options = {}) {
-      return fetch(API_BASE + endpoint, {
+    async function fetchJson(endpoint, options = {}) {
+      const response = await AUTH.fetchAuth(endpoint, {
         ...options,
         headers: {
-          ...AUTH.getHeaders(),
           ...(options.headers || {}),
         },
-      }).then(async (response) => {
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(body.message || 'Error de comunicación con el servidor');
-        }
-        return body;
       });
+
+      if (!response) {
+        throw new Error('Sesión expirada. Inicia sesión nuevamente.');
+      }
+
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(body.message || 'Error de comunicación con el servidor');
+      }
+      return body;
     }
 
     async function loadDesigns() {
@@ -550,7 +556,13 @@
     }
 
     async function deactivateDesign(id) {
-      if (!confirm('¿Desactivar este diseño?')) return;
+      const confirmed = await APP_CONFIRM_DANGER({
+        title: 'Desactivar diseño',
+        message: 'Este diseño quedará oculto del catálogo y no podrá pedirse desde el panel.',
+        details: 'Puedes reactivarlo más adelante editando el diseño.',
+        confirmText: 'Desactivar diseño',
+      });
+      if (!confirmed) return;
       try {
         await fetchJson(`/designs/${id}`, { method: 'DELETE' });
         await loadDesigns();

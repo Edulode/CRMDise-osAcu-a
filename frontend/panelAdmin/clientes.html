@@ -7,9 +7,10 @@
   <title>Clientes</title>
 
   <script src="../src/js/auth.js" defer></script>
+  <script src="../src/js/confirm-dialog.js" defer></script>
   <script defer>
     window.addEventListener('DOMContentLoaded', () => {
-      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+      if (!AUTH.isAuthenticated() || !['admin', 'gerente', 'colaborador'].includes(AUTH.getUser()?.role)) {
         window.location.href = './login.html';
       }
     });
@@ -434,7 +435,7 @@
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
-        <input id="search-input" type="text" placeholder="Buscar por nombre o email..."
+        <input id="search-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Buscar por nombre o email..."
           class="search-input w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-slate-50 text-gray-700 placeholder-gray-400" />
       </div>
 
@@ -509,7 +510,7 @@
   </main>
 
   <!-- ══ Modal: Nuevo / Editar usuario ══ -->
-  <div id="modal-overlay" onclick="cerrarModalOverlay(event)">
+  <div id="modal-overlay">
     <div id="modal-box">
       <!-- Header -->
       <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
@@ -597,7 +598,7 @@
        DATA SIMULADA (reemplazar con backend)
        ════════════════════════════════ -->
   <script>
-    const API_BASE = 'http://localhost:4000/api';
+    const API_BASE = '/api';
     let usuariosData = [];
     let toastTimer;
 
@@ -642,13 +643,16 @@
     }
 
     async function fetchJson(endpoint, options = {}) {
-      const response = await fetch(`${API_BASE}${endpoint}`, {
+      const response = await AUTH.fetchAuth(endpoint, {
         ...options,
         headers: {
-          ...AUTH.getHeaders(),
           ...(options.headers || {}),
         },
       });
+
+      if (!response) {
+        throw new Error('Sesión expirada. Inicia sesión nuevamente.');
+      }
 
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -828,7 +832,7 @@
     }
 
     function cerrarModal() { document.getElementById('modal-overlay').classList.remove('open'); }
-    function cerrarModalOverlay(e) { if (e.target === document.getElementById('modal-overlay')) cerrarModal(); }
+    function cerrarModalOverlay(e) { if (e && e.target === document.getElementById('modal-overlay')) cerrarModal(); }
 
     async function guardarUsuario() {
       const nombre = document.getElementById('m-nombre').value.trim();
@@ -885,7 +889,14 @@
       const selected = usuariosData[idx];
       if (!selected) return;
 
-      if (!confirm(`¿Eliminar a ${nombreCompleto(selected)}?`)) {
+      const confirmed = await APP_CONFIRM_DANGER({
+        title: 'Eliminar cliente',
+        message: `Vas a eliminar a ${nombreCompleto(selected)} del catálogo de clientes.`,
+        details: 'Esta acción eliminará el registro del cliente y no se puede deshacer.',
+        confirmText: 'Eliminar cliente',
+      });
+
+      if (!confirmed) {
         return;
       }
 
@@ -901,6 +912,19 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      const searchInput = document.getElementById('search-input');
+      searchInput.value = '';
+      filtroBusq = '';
+      searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim() === 'Buscar por nombre o email...') {
+          searchInput.value = '';
+        }
+      });
+
+      document.getElementById('modal-box').addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+
       try {
         await loadCustomers('');
       } catch (error) {

@@ -6,8 +6,9 @@
  */
 
 const AUTH = {
-    API_BASE: 'http://localhost:4000/api',
+    API_BASE: '/api',
     TOKEN_KEY: 'da_token',
+    REFRESH_TOKEN_KEY: 'da_refresh_token',
     USER_KEY: 'da_user',
     
     /**
@@ -21,11 +22,23 @@ const AUTH = {
         localStorage.setItem(this.TOKEN_KEY, token);
     },
 
+    setRefreshToken(token) {
+        if (!token) {
+            localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+            return;
+        }
+        localStorage.setItem(this.REFRESH_TOKEN_KEY, token);
+    },
+
     /**
      * Recuperar token JWT actual
      */
     getToken() {
         return localStorage.getItem(this.TOKEN_KEY) || null;
+    },
+
+    getRefreshToken() {
+        return localStorage.getItem(this.REFRESH_TOKEN_KEY) || null;
     },
 
     /**
@@ -80,6 +93,67 @@ const AUTH = {
         return user?.role || null;
     },
 
+    clearSession() {
+        const localKeys = [];
+        const sessionKeys = [];
+
+        for (let index = 0; index < localStorage.length; index += 1) {
+            const key = localStorage.key(index);
+            if (key) {
+                localKeys.push(key);
+            }
+        }
+
+        for (let index = 0; index < sessionStorage.length; index += 1) {
+            const key = sessionStorage.key(index);
+            if (key) {
+                sessionKeys.push(key);
+            }
+        }
+
+        localKeys.forEach((key) => {
+            if (key.startsWith('da_') || key === this.TOKEN_KEY || key === this.REFRESH_TOKEN_KEY || key === this.USER_KEY) {
+                localStorage.removeItem(key);
+            }
+        });
+
+        sessionKeys.forEach((key) => {
+            if (key.startsWith('da_') || key === '_cart_data') {
+                sessionStorage.removeItem(key);
+            }
+        });
+
+        localStorage.removeItem('da_carrito');
+    },
+
+    isTokenExpired() {
+        const token = this.getToken();
+        if (!token) {
+            return false;
+        }
+
+        const payload = this.decodeToken(token);
+        if (!payload?.exp) {
+            return true;
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        return payload.exp <= now;
+    },
+
+    getLoginRedirectPath(preferredPath = null) {
+        if (preferredPath && typeof preferredPath === 'string') {
+            return preferredPath;
+        }
+
+        const currentPath = window.location.pathname || '';
+        if (currentPath.includes('/panelAdmin/')) {
+            return '/panelAdmin/login.html';
+        }
+
+        return '/landing/login.html';
+    },
+
     /**
      * Construir headers con autorización
      */
@@ -103,15 +177,55 @@ const AUTH = {
         };
 
         const response = await fetch(url, config);
-        
-        // Si retorna 401, significa token expirado o inválido
+
+        if (response.status === 401 && this.getRefreshToken()) {
+            const renewed = await this.refreshSession();
+            if (renewed) {
+                const retry = await fetch(url, {
+                    ...options,
+                    headers: this.getHeaders(),
+                });
+
+                if (retry.status !== 401) {
+                    return retry;
+                }
+            }
+        }
+
+        // Si retorna 401, significa token expirado, inválido o sesión revocada
         if (response.status === 401) {
             this.logout();
-            window.location.href = '/landing/login.html';
             return null;
         }
 
         return response;
+    },
+
+    async refreshSession() {
+        const refreshToken = this.getRefreshToken();
+        if (!refreshToken) {
+            return false;
+        }
+
+        try {
+            const response = await fetch(`${this.API_BASE}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken }),
+            });
+
+            if (!response.ok) {
+                return false;
+            }
+
+            const result = await response.json();
+            this.setToken(result.token);
+            this.setRefreshToken(result.refreshToken);
+            this.setUser(this.normalizeUser(result.user));
+            return true;
+        } catch {
+            return false;
+        }
     },
 
     /**
@@ -145,6 +259,7 @@ const AUTH = {
         
         // Guardar token y usuario
         this.setToken(result.token);
+        this.setRefreshToken(result.refreshToken);
         this.setUser(this.normalizeUser(result.user));
 
         return result;
@@ -169,6 +284,7 @@ const AUTH = {
         
         // Guardar token y usuario
         this.setToken(result.token);
+        this.setRefreshToken(result.refreshToken);
         this.setUser(this.normalizeUser(result.user));
 
         return result;
@@ -177,11 +293,28 @@ const AUTH = {
     /**
      * LOGOUT - Limpiar sesión
      */
-    logout() {
-        this.setToken(null);
-        this.setUser(null);
-        localStorage.removeItem('da_carrito');
-        sessionStorage.clear();
+    logout(preferredPath = null) {
+        const refreshToken = this.getRefreshToken();
+        const accessToken = this.getToken();
+
+        if (accessToken) {
+            fetch(`${this.API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ refreshToken }),
+            }).catch(() => null);
+        }
+
+        this.clearSession();
+
+        const targetPath = this.getLoginRedirectPath(preferredPath);
+        const currentPath = window.location.pathname || '';
+        if (currentPath !== targetPath) {
+            window.location.href = targetPath;
+        }
     },
 
     /**
@@ -213,7 +346,7 @@ const AUTH = {
         if (this.isAuthenticated()) {
             const user = this.getUser();
             // Determinar a dónde redirigir según el rol
-            if (user?.role === 'admin' || user?.role === 'employee') {
+            if (user?.role === 'admin' || user?.role === 'gerente' || user?.role === 'colaborador') {
                 window.location.href = '/panelAdmin/index.html';
             } else {
                 window.location.href = '/landing/index.html';
@@ -230,7 +363,9 @@ const AUTH = {
     decodeToken(token) {
         try {
             const part = token.split('.')[1];
-            const decoded = atob(part);
+            const normalized = part.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+            const decoded = atob(padded);
             return JSON.parse(decoded);
         } catch {
             return null;

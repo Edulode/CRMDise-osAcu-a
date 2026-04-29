@@ -8,7 +8,7 @@
   <script src="../src/js/auth.js" defer></script>
   <script defer>
     window.addEventListener('DOMContentLoaded', () => {
-      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+      if (!AUTH.isAuthenticated() || !['admin', 'gerente', 'colaborador'].includes(AUTH.getUser()?.role)) {
         window.location.href = './login.html';
       }
     });
@@ -508,6 +508,164 @@
       color: var(--text-muted);
     }
 
+    .mail-inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .mail-input {
+      flex: 1 1 260px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font: inherit;
+      font-size: 0.84rem;
+      color: var(--text-primary);
+      background: #fff;
+    }
+
+    .mail-missing {
+      margin: 0;
+      font-size: 0.78rem;
+      color: #991b1b;
+    }
+
+    .staff-toolbar {
+      padding: 14px 18px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .staff-table-wrap {
+      padding: 0 18px 16px;
+      overflow-x: auto;
+    }
+
+    .staff-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 560px;
+    }
+
+    .staff-table th {
+      text-align: left;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px;
+    }
+
+    .staff-table td {
+      font-size: 0.82rem;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px;
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    .staff-role {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: #eef2ff;
+      color: #4338ca;
+      text-transform: capitalize;
+    }
+
+    .staff-role.admin {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .staff-role.gerente {
+      background: #e0f2fe;
+      color: #0c4a6e;
+    }
+
+    .staff-status {
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+
+    .staff-status.on {
+      color: #15803d;
+    }
+
+    .staff-status.off {
+      color: #b91c1c;
+    }
+
+    .staff-actions {
+      display: inline-flex;
+      gap: 6px;
+    }
+
+    .staff-action-btn {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      background: #fff;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .staff-action-btn.danger {
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+
+    .staff-empty {
+      padding: 10px 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    #staffModalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+      padding: 14px;
+    }
+
+    #staffModalOverlay.open {
+      display: flex;
+    }
+
+    .staff-modal {
+      width: min(560px, 100%);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.24);
+      padding: 14px;
+    }
+
+    .staff-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .staff-grid .full {
+      grid-column: 1 / -1;
+    }
+
     /* ─────────── TOAST ─────────── */
     #toast {
       position: fixed;
@@ -759,16 +917,129 @@
       <div class="mail-status">
         <span id="mailStatusPill" class="mail-pill off">No configurado</span>
         <p id="mailMeta" class="mail-meta">Cargando estado de correo...</p>
-        <div>
+        <p id="mailMissing" class="mail-missing"></p>
+        <div class="mail-inline">
+          <input id="mailTestTo" class="mail-input" type="email" placeholder="Correo destino para prueba (opcional)" />
           <button id="btnMailTest" type="button" class="btn btn-primary">Enviar correo de prueba</button>
         </div>
       </div>
     </div>
 
+    <div id="staffCard" class="card" style="animation-delay:0.25s; display:none;">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5V4H2v16h5" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a3 3 0 100-6 3 3 0 000 6z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 20a6 6 0 0112 0" />
+          </svg>
+        </div>
+        <div class="card-header-text">
+          <h2>Usuarios internos</h2>
+          <p>Gestiona cuentas del equipo comercial y operativo</p>
+        </div>
+      </div>
+      <div class="staff-toolbar">
+        <p id="staffCounter" class="mail-meta">0 usuarios</p>
+        <button id="btnNewStaff" type="button" class="btn btn-primary">Nuevo usuario</button>
+      </div>
+      <div class="staff-table-wrap">
+        <table class="staff-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="staffBody"></tbody>
+        </table>
+        <p id="staffEmpty" class="staff-empty">Cargando usuarios...</p>
+      </div>
+    </div>
+
   </main>
 
+  <div id="staffModalOverlay" aria-hidden="true">
+    <div class="staff-modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <h3 id="staffModalTitle" style="font-size:0.95rem;font-weight:700;color:var(--text-primary);">Nuevo usuario interno</h3>
+        <button id="staffCloseBtn" type="button" class="btn btn-ghost">Cerrar</button>
+      </div>
+      <form id="staffForm" class="staff-grid">
+        <div class="full field-group">
+          <label for="staffFullName">Nombre completo</label>
+          <input id="staffFullName" class="input-field" type="text" required />
+        </div>
+        <div class="full field-group">
+          <label for="staffEmail">Email</label>
+          <input id="staffEmail" class="input-field" type="email" required />
+        </div>
+        <div class="field-group">
+          <label for="staffRole">Rol</label>
+          <select id="staffRole" class="input-field">
+            <option value="admin">Admin</option>
+            <option value="gerente">Gerente</option>
+            <option value="colaborador">Colaborador</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="staffActive">Activo</label>
+          <select id="staffActive" class="input-field">
+            <option value="true">Sí</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div id="staffPasswordWrap" class="full field-group">
+          <label for="staffPassword">Contraseña inicial</label>
+          <input id="staffPassword" class="input-field" type="password" minlength="8" />
+        </div>
+        <div class="full" style="display:flex;justify-content:flex-end;gap:8px;">
+          <button id="staffCancelBtn" type="button" class="btn btn-ghost">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
-    const API_BASE = 'http://localhost:4000/api';
+    const API_BASE = '/api';
+    const STAFF_ROLES = ['admin', 'gerente', 'colaborador'];
+    let staffUsers = [];
+    let staffEditId = null;
+
+    function isAdminUser() {
+      return AUTH.getUser()?.role === 'admin';
+    }
+
+    function roleLabel(role) {
+      if (role === 'admin') return 'Admin';
+      if (role === 'gerente') return 'Gerente';
+      if (role === 'colaborador') return 'Colaborador';
+      return role || '-';
+    }
+
+    async function fetchJson(endpoint, options = {}) {
+      const response = await AUTH.fetchAuth(endpoint, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+        },
+      });
+
+      if (!response) {
+        throw new Error('Sesión expirada. Inicia sesión nuevamente.');
+      }
+
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(body.message || 'No se pudo completar la solicitud');
+      }
+
+      return body;
+    }
 
     function toggleVisibility(inputId, btn) {
       const input = document.getElementById(inputId);
@@ -993,6 +1264,7 @@
     async function loadMailStatus() {
       const pill = document.getElementById('mailStatusPill');
       const meta = document.getElementById('mailMeta');
+      const missing = document.getElementById('mailMissing');
       try {
         const response = await fetch(`${API_BASE}/auth/notifications/status`, { headers: AUTH.getHeaders() });
         const body = await response.json().catch(() => ({}));
@@ -1002,25 +1274,31 @@
 
         const enabled = Boolean(body.data?.emailEnabled);
         const fromEmail = body.data?.fromEmail || 'no definido';
+        const missingVars = body.data?.missing || [];
         pill.className = `mail-pill ${enabled ? 'ok' : 'off'}`;
         pill.textContent = enabled ? 'Configurado' : 'No configurado';
         meta.textContent = `Proveedor: SendGrid · Remitente: ${fromEmail}`;
+        missing.textContent = missingVars.length
+          ? `Falta configurar: ${missingVars.join(', ')}`
+          : '';
       } catch (error) {
         pill.className = 'mail-pill off';
         pill.textContent = 'Error';
         meta.textContent = error.message;
+        missing.textContent = '';
       }
     }
 
     async function sendTestMail() {
       const button = document.getElementById('btnMailTest');
+      const target = document.getElementById('mailTestTo').value.trim();
       button.disabled = true;
       button.textContent = 'Enviando...';
       try {
         const response = await fetch(`${API_BASE}/auth/notifications/test`, {
           method: 'POST',
           headers: AUTH.getHeaders(),
-          body: JSON.stringify({}),
+          body: JSON.stringify({ to: target || undefined }),
         });
 
         const body = await response.json().catch(() => ({}));
@@ -1037,6 +1315,162 @@
       }
     }
 
+    function closeStaffModal() {
+      document.getElementById('staffModalOverlay').classList.remove('open');
+      staffEditId = null;
+      document.getElementById('staffForm').reset();
+      document.getElementById('staffPasswordWrap').style.display = '';
+      document.getElementById('staffPassword').required = true;
+      document.getElementById('staffEmail').disabled = false;
+      document.getElementById('staffModalTitle').textContent = 'Nuevo usuario interno';
+    }
+
+    function openStaffCreate() {
+      staffEditId = null;
+      document.getElementById('staffForm').reset();
+      document.getElementById('staffModalTitle').textContent = 'Nuevo usuario interno';
+      document.getElementById('staffPasswordWrap').style.display = '';
+      document.getElementById('staffPassword').required = true;
+      document.getElementById('staffEmail').disabled = false;
+      document.getElementById('staffModalOverlay').classList.add('open');
+    }
+
+    function openStaffEdit(userId) {
+      const user = staffUsers.find((item) => item.id === userId);
+      if (!user) return;
+      staffEditId = user.id;
+      document.getElementById('staffModalTitle').textContent = 'Editar usuario interno';
+      document.getElementById('staffFullName').value = user.full_name || '';
+      document.getElementById('staffEmail').value = user.email || '';
+      document.getElementById('staffRole').value = user.role || 'colaborador';
+      document.getElementById('staffActive').value = String(Boolean(user.active));
+      document.getElementById('staffPasswordWrap').style.display = 'none';
+      document.getElementById('staffPassword').required = false;
+      document.getElementById('staffEmail').disabled = false;
+      document.getElementById('staffModalOverlay').classList.add('open');
+    }
+
+    async function loadStaffUsers() {
+      const card = document.getElementById('staffCard');
+      if (!isAdminUser()) {
+        card.style.display = 'none';
+        return;
+      }
+
+      card.style.display = 'block';
+      const result = await fetchJson('/users');
+      staffUsers = (result.data || []).filter((item) => STAFF_ROLES.includes(item.role));
+      renderStaffUsers();
+    }
+
+    function renderStaffUsers() {
+      const body = document.getElementById('staffBody');
+      const empty = document.getElementById('staffEmpty');
+      const counter = document.getElementById('staffCounter');
+
+      counter.textContent = `${staffUsers.length} usuarios`;
+
+      if (!staffUsers.length) {
+        body.innerHTML = '';
+        empty.textContent = 'No hay usuarios internos registrados.';
+        return;
+      }
+
+      empty.textContent = '';
+      body.innerHTML = staffUsers.map((user) => {
+        const roleClass = `staff-role ${user.role || ''}`;
+        const activeClass = user.active ? 'staff-status on' : 'staff-status off';
+        return `
+          <tr>
+            <td>${user.full_name || '-'}</td>
+            <td>${user.email || '-'}</td>
+            <td><span class="${roleClass}">${roleLabel(user.role)}</span></td>
+            <td><span class="${activeClass}">${user.active ? 'Activo' : 'Inactivo'}</span></td>
+            <td>
+              <div class="staff-actions">
+                <button class="staff-action-btn" type="button" onclick="openStaffEdit('${user.id}')">Editar</button>
+                <button class="staff-action-btn" type="button" onclick="toggleStaffActive('${user.id}', ${!user.active})">${user.active ? 'Desactivar' : 'Activar'}</button>
+                <button class="staff-action-btn danger" type="button" onclick="deleteStaffUser('${user.id}')">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function saveStaffUser(event) {
+      event.preventDefault();
+      const fullName = document.getElementById('staffFullName').value.trim();
+      const email = document.getElementById('staffEmail').value.trim();
+      const role = document.getElementById('staffRole').value;
+      const active = document.getElementById('staffActive').value === 'true';
+      const password = document.getElementById('staffPassword').value;
+
+      if (!fullName || !email || !STAFF_ROLES.includes(role)) {
+        showToast('Completa los campos requeridos del usuario.', 'error');
+        return;
+      }
+
+      try {
+        const mode = staffEditId ? 'edit' : 'create';
+        if (!staffEditId) {
+          if (!password || password.length < 8) {
+            showToast('La contraseña inicial debe tener al menos 8 caracteres.', 'error');
+            return;
+          }
+
+          await fetchJson('/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fullName, email, role, active, password }),
+          });
+        } else {
+          await fetchJson(`/users/${staffEditId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fullName, email, role, active }),
+          });
+        }
+
+        closeStaffModal();
+        await loadStaffUsers();
+        showToast(mode === 'create' ? 'Usuario interno creado.' : 'Usuario interno actualizado.');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function toggleStaffActive(userId, nextState) {
+      const user = staffUsers.find((item) => item.id === userId);
+      if (!user) return;
+
+      try {
+        await fetchJson(`/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ active: Boolean(nextState) }),
+        });
+        await loadStaffUsers();
+        showToast(nextState ? 'Usuario activado.' : 'Usuario desactivado.');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function deleteStaffUser(userId) {
+      const user = staffUsers.find((item) => item.id === userId);
+      if (!user) return;
+      if (!confirm(`¿Eliminar al usuario ${user.full_name}?`)) return;
+
+      try {
+        await fetchJson(`/users/${userId}`, { method: 'DELETE' });
+        await loadStaffUsers();
+        showToast('Usuario eliminado correctamente.');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
     document.getElementById('confirmPassword').addEventListener('input', function () {
       const newVal = document.getElementById('newPassword').value;
       if (!this.value) return;
@@ -1044,10 +1478,27 @@
       else setFieldState('confirmPassword', 'confirmPasswordError', '');
     });
 
+    window.openStaffEdit = openStaffEdit;
+    window.toggleStaffActive = toggleStaffActive;
+    window.deleteStaffUser = deleteStaffUser;
+
     document.addEventListener('DOMContentLoaded', () => {
       loadActivity();
       loadMailStatus();
       document.getElementById('btnMailTest').addEventListener('click', sendTestMail);
+
+      if (isAdminUser()) {
+        loadStaffUsers().catch((error) => showToast(error.message, 'error'));
+        document.getElementById('btnNewStaff').addEventListener('click', openStaffCreate);
+        document.getElementById('staffCloseBtn').addEventListener('click', closeStaffModal);
+        document.getElementById('staffCancelBtn').addEventListener('click', closeStaffModal);
+        document.getElementById('staffForm').addEventListener('submit', saveStaffUser);
+        document.getElementById('staffModalOverlay').addEventListener('click', (event) => {
+          if (event.target.id === 'staffModalOverlay') {
+            closeStaffModal();
+          }
+        });
+      }
     });
   </script>
 </body>

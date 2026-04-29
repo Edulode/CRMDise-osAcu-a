@@ -1,7 +1,7 @@
 const USER_ROLES = Object.freeze({
   ADMIN: 'admin',
-  EDITOR: 'editor',
-  COLLABORATOR: 'collaborator',
+  EDITOR: 'gerente',
+  COLLABORATOR: 'colaborador',
   CUSTOMER: 'customer',
 });
 

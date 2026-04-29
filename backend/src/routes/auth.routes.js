@@ -7,8 +7,25 @@ const { env } = require('../config/env');
 const { USER_ROLES } = require('../config/constants');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
-const { loginSchema, registerSchema, changePasswordSchema } = require('../validators/auth.validators');
+const {
+  loginSchema,
+  registerSchema,
+  changePasswordSchema,
+  refreshTokenSchema,
+  passwordResetRequestSchema,
+  passwordResetConfirmSchema,
+  twoFactorVerifySchema,
+} = require('../validators/auth.validators');
 const { sendEmail, isEmailEnabled } = require('../services/notification.service');
+const {
+  issueSessionTokens,
+  revokeAccessToken,
+  revokeRefreshToken,
+  rotateRefreshToken,
+  createPasswordResetToken,
+  consumePasswordResetToken,
+} = require('../services/security.service');
+const { generateSecret, verifyTotp, buildOtpAuthUri } = require('../utils/totp');
 
 const router = express.Router();
 
@@ -49,6 +66,41 @@ function buildTokenPayload(user) {
     full_name: user.full_name,
     customer_id: user.customer_id,
     created_at: user.created_at ?? null,
+  };
+}
+
+async function loadUserWithMfaByEmail(email) {
+  const result = await pool.query(
+    `SELECT u.id, u.full_name, u.email, u.role, u.customer_id, u.created_at, u.password_hash, u.active,
+            COALESCE(m.enabled, false) AS mfa_enabled,
+            m.secret AS mfa_secret
+     FROM users u
+     LEFT JOIN user_mfa m ON m.user_id = u.id
+     WHERE u.email = $1
+     LIMIT 1`,
+    [email]
+  );
+
+  return result.rows[0] || null;
+}
+
+async function issueAuthResponse(client, user, req) {
+  const session = await issueSessionTokens(client, user, {
+    userAgent: req.headers['user-agent'] ?? null,
+    ipAddress: getClientIp(req),
+  });
+
+  return {
+    token: session.accessToken,
+    refreshToken: session.refreshToken,
+    user: {
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      role: user.role,
+      customer_id: user.customer_id,
+      created_at: user.created_at,
+    },
   };
 }
 
@@ -94,7 +146,9 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
       return res.status(409).json({ message: 'Ya existe una cuenta con ese correo' });
     }
 
-    const token = jwt.sign(buildTokenPayload(result.user), env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+    const response = await withTransaction(async (client) => {
+      return issueAuthResponse(client, result.user, req);
+    });
 
     await logSecurityEvent({
       userId: result.user.id,
@@ -107,8 +161,7 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
 
     return res.status(201).json({
       message: 'Registro completado',
-      token,
-      user: result.user,
+      ...response,
     });
   } catch (error) {
     return next(error);
@@ -117,16 +170,10 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
 
 router.post('/login', validate(loginSchema), async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    const result = await pool.query(
-      `SELECT id, full_name, email, role, customer_id, created_at, password_hash
-       FROM users
-       WHERE email = $1
-       LIMIT 1`,
-      [email]
-    );
+    const { email, password, twoFactorCode } = req.body;
+    const user = await loadUserWithMfaByEmail(email);
 
-    if (result.rowCount === 0) {
+    if (!user || !user.active) {
       await logSecurityEvent({
         email,
         action: 'login',
@@ -137,7 +184,6 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    const user = result.rows[0];
     const passwordMatches = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatches) {
       await logSecurityEvent({
@@ -151,7 +197,25 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    const token = jwt.sign(buildTokenPayload(user), env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+    if (user.mfa_enabled) {
+      if (!twoFactorCode || !verifyTotp(user.mfa_secret, twoFactorCode)) {
+        await logSecurityEvent({
+          userId: user.id,
+          email: user.email,
+          action: 'login_2fa',
+          status: 'failed',
+          req,
+          metadata: { reason: 'invalid_totp' },
+        });
+
+        return res.status(401).json({ message: 'Código 2FA inválido o requerido', mfaRequired: true });
+      }
+    }
+
+    const resultPayload = await withTransaction(async (client) => {
+      const payload = await issueAuthResponse(client, user, req);
+      return payload;
+    });
 
     await logSecurityEvent({
       userId: user.id,
@@ -162,17 +226,175 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
       metadata: { role: user.role },
     });
 
+    return res.status(200).json(resultPayload);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/refresh', validate(refreshTokenSchema), async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    const session = await rotateRefreshToken(refreshToken, {
+      userAgent: req.headers['user-agent'] ?? null,
+      ipAddress: getClientIp(req),
+    });
+
     return res.status(200).json({
-      token,
+      token: session.accessToken,
+      refreshToken: session.refreshToken,
       user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        role: user.role,
-        customer_id: user.customer_id,
-        created_at: user.created_at,
+        id: session.user.id,
+        full_name: session.user.full_name,
+        email: session.user.email,
+        role: session.user.role,
+        customer_id: session.user.customer_id,
+        created_at: session.user.created_at,
       },
     });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/logout', authenticateToken, async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body || {};
+    await revokeAccessToken({ jti: req.user.jti, userId: req.user.sub, expiresAt: req.user.exp, reason: 'logout' });
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken, 'logout');
+    }
+
+    return res.status(200).json({ message: 'Sesión cerrada correctamente' });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/password-reset/request', validate(passwordResetRequestSchema), async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const result = await pool.query(
+      `SELECT id, full_name, email
+       FROM users
+       WHERE email = $1 AND active = TRUE
+       LIMIT 1`,
+      [email]
+    );
+
+    if (result.rowCount > 0) {
+      const user = result.rows[0];
+      const token = await createPasswordResetToken(pool, user.id);
+      const resetUrl = `${req.headers.origin || 'http://localhost:8080'}/landing/reset-password.html?token=${encodeURIComponent(token.rawToken)}`;
+
+      await sendEmail({
+        to: user.email,
+        subject: 'Recuperación de contraseña - Diseños Acuña',
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
+            <h2>Recuperación de contraseña</h2>
+            <p>Hola ${user.full_name},</p>
+            <p>Solicitaste restablecer tu contraseña. Usa el siguiente enlace:</p>
+            <p><a href="${resetUrl}">${resetUrl}</a></p>
+            <p>Este enlace expirará en 1 hora.</p>
+          </div>
+        `,
+      }).catch(() => null);
+    }
+
+    return res.status(200).json({ message: 'Si el correo existe, se enviaron instrucciones de recuperación' });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/password-reset/confirm', validate(passwordResetConfirmSchema), async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    const userId = await consumePasswordResetToken(token);
+    const newPasswordHash = await bcrypt.hash(newPassword, 12);
+
+    await pool.query(
+      `UPDATE users
+       SET password_hash = $1, updated_at = NOW()
+       WHERE id = $2`,
+      [newPasswordHash, userId]
+    );
+
+    await pool.query(
+      `UPDATE auth_refresh_tokens
+       SET revoked_at = NOW(), revocation_reason = 'password_reset'
+       WHERE user_id = $1 AND revoked_at IS NULL`,
+      [userId]
+    );
+
+    return res.status(200).json({ message: 'Contraseña actualizada correctamente' });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/2fa/setup', authenticateToken, async (req, res, next) => {
+  try {
+    const userResult = await pool.query(
+      `SELECT id, full_name, email
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [req.user.sub]
+    );
+
+    if (userResult.rowCount === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    const secret = generateSecret();
+    await pool.query(
+      `INSERT INTO user_mfa (user_id, secret, enabled, updated_at)
+       VALUES ($1, $2, FALSE, NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET secret = EXCLUDED.secret, enabled = FALSE, verified_at = NULL, updated_at = NOW()`,
+      [req.user.sub, secret]
+    );
+
+    return res.status(200).json({
+      data: {
+        secret,
+        otpauthUri: buildOtpAuthUri({ issuer: 'Disenos Acuna', accountName: userResult.rows[0].email, secret }),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/2fa/verify', authenticateToken, validate(twoFactorVerifySchema), async (req, res, next) => {
+  try {
+    const { code } = req.body;
+    const result = await pool.query(
+      `SELECT secret, enabled
+       FROM user_mfa
+       WHERE user_id = $1
+       LIMIT 1`,
+      [req.user.sub]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(400).json({ message: 'No hay configuración 2FA pendiente' });
+    }
+
+    if (!verifyTotp(result.rows[0].secret, code)) {
+      return res.status(400).json({ message: 'Código 2FA inválido' });
+    }
+
+    await pool.query(
+      `UPDATE user_mfa
+       SET enabled = TRUE, verified_at = NOW(), updated_at = NOW()
+       WHERE user_id = $1`,
+      [req.user.sub]
+    );
+
+    return res.status(200).json({ message: '2FA habilitado correctamente' });
   } catch (error) {
     return next(error);
   }
@@ -288,11 +510,20 @@ router.get('/activity', authenticateToken, async (req, res, next) => {
 });
 
 router.get('/notifications/status', authenticateToken, requireRole(USER_ROLES.ADMIN), async (_req, res) => {
+  const missing = [];
+  if (!env.sendgridApiKey) {
+    missing.push('SENDGRID_API_KEY');
+  }
+  if (!env.sendgridFromEmail) {
+    missing.push('SENDGRID_FROM_EMAIL');
+  }
+
   return res.status(200).json({
     data: {
       emailEnabled: isEmailEnabled(),
       fromEmail: env.sendgridFromEmail || null,
       provider: 'sendgrid',
+      missing,
     },
   });
 });

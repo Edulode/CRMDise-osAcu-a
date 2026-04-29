@@ -4,11 +4,11 @@ const { withTransaction } = require('../db/transaction');
 const { authenticateToken, optionalAuth, requireRole, requireOwnershipOrder } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { ORDER_STATUSES, USER_ROLES, PAYMENT_STATUSES } = require('../config/constants');
-const { checkoutSchema, orderStatusSchema } = require('../validators/order.validators');
+const { checkoutSchema, orderStatusSchema, orderUpdateSchema } = require('../validators/order.validators');
 const { calculateOrderTotals } = require('../utils/pricing');
 const { createPublicCode } = require('../utils/id');
 const { createPaymentIntent } = require('../services/payment.service');
-const { sendOrderConfirmationEmail } = require('../services/notification.service');
+const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail, sendPaymentConfirmedEmail } = require('../services/notification.service');
 
 const router = express.Router();
 
@@ -127,8 +127,9 @@ router.post('/checkout', optionalAuth, validate(checkoutSchema), async (req, res
 
         const availableStock = Number(inventory.stock ?? 0);
         if (availableStock < item.quantity) {
-          const error = new Error(`Inventario insuficiente para ${design.name}`);
+          const error = new Error(`Inventario insuficiente para ${design.name}. Disponibles: ${availableStock}`);
           error.statusCode = 409;
+          error.availableStock = availableStock;
           throw error;
         }
 
@@ -247,7 +248,9 @@ router.post('/checkout', optionalAuth, validate(checkoutSchema), async (req, res
       orderCode: order.order_code,
       customerName: order.customer.full_name,
       total: order.total_amount,
-    }).catch(() => null);
+    }).catch((err) => {
+      console.error('⚠️  Error enviando email de confirmación de pedido:', err.message);
+    });
 
     return res.status(201).json({ data: order });
   } catch (error) {
@@ -255,10 +258,17 @@ router.post('/checkout', optionalAuth, validate(checkoutSchema), async (req, res
   }
 });
 
-router.patch('/:id/status', authenticateToken, requireRole(USER_ROLES.ADMIN, USER_ROLES.COLLABORATOR), validate(orderStatusSchema), async (req, res, next) => {
+router.patch('/:id/status', authenticateToken, requireRole(USER_ROLES.ADMIN, USER_ROLES.EDITOR, USER_ROLES.COLLABORATOR), validate(orderStatusSchema), async (req, res, next) => {
   try {
     const updated = await withTransaction(async (client) => {
-      const current = await client.query('SELECT id, status FROM orders WHERE id = $1 LIMIT 1', [req.params.id]);
+      const current = await client.query(
+        `SELECT o.id, o.status, o.order_code, c.email AS customer_email, c.full_name AS customer_name
+         FROM orders o
+         INNER JOIN customers c ON c.id = o.customer_id
+         WHERE o.id = $1
+         LIMIT 1`,
+        [req.params.id]
+      );
       if (current.rowCount === 0) {
         const error = new Error('Pedido no encontrado');
         error.statusCode = 404;
@@ -279,7 +289,117 @@ router.patch('/:id/status', authenticateToken, requireRole(USER_ROLES.ADMIN, USE
         [req.params.id, current.rows[0].status, req.body.status, req.user.sub, req.body.notes ?? null]
       );
 
-      return result.rows[0];
+      return {
+        ...result.rows[0],
+        previous_status: current.rows[0].status,
+        customer_email: current.rows[0].customer_email,
+        customer_name: current.rows[0].customer_name,
+      };
+    });
+
+    const statusLabelMap = {
+      pending: 'Pendiente',
+      paid: 'Pagado',
+      in_production: 'En producción',
+      shipped: 'Enviado',
+      completed: 'Completado',
+      canceled: 'Cancelado',
+    };
+
+    if (updated.previous_status !== updated.status) {
+      await sendOrderStatusUpdateEmail({
+        to: updated.customer_email,
+        orderCode: updated.order_code,
+        customerName: updated.customer_name,
+        statusLabel: statusLabelMap[updated.status] || updated.status,
+      }).catch((err) => {
+        console.error('⚠️  Error enviando email de actualización de estado:', err.message);
+      });
+
+      if (updated.status === ORDER_STATUSES.PAID) {
+        await sendPaymentConfirmedEmail({
+          to: updated.customer_email,
+          orderCode: updated.order_code,
+          customerName: updated.customer_name,
+          total: updated.total_amount,
+        }).catch((err) => {
+          console.error('⚠️  Error enviando email de pago confirmado:', err.message);
+        });
+      }
+    }
+
+    return res.status(200).json({ data: updated });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.put('/:id', authenticateToken, requireRole(USER_ROLES.ADMIN, USER_ROLES.EDITOR, USER_ROLES.COLLABORATOR), validate(orderUpdateSchema), async (req, res, next) => {
+  try {
+    const updated = await withTransaction(async (client) => {
+      const current = await client.query(
+        `SELECT id, status, subtotal_amount, shipping_amount, total_amount, notes
+         FROM orders
+         WHERE id = $1
+         LIMIT 1`,
+        [req.params.id]
+      );
+
+      if (current.rowCount === 0) {
+        const error = new Error('Pedido no encontrado');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const currentOrder = current.rows[0];
+      if (currentOrder.status === ORDER_STATUSES.CANCELED) {
+        const error = new Error('No se puede editar un pedido cancelado');
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const nextShipping = req.body.shippingAmount ?? Number(currentOrder.shipping_amount);
+      const nextStatus = req.body.status ?? currentOrder.status;
+      const nextNotes = req.body.notes === undefined ? currentOrder.notes : req.body.notes;
+      const nextTotal = Number(currentOrder.subtotal_amount) + Number(nextShipping);
+
+      const result = await client.query(
+        `UPDATE orders
+         SET status = $1,
+             shipping_amount = $2,
+             total_amount = $3,
+             notes = $4,
+             updated_at = NOW()
+         WHERE id = $5
+         RETURNING id, order_code, status, subtotal_amount, shipping_amount, total_amount, notes, updated_at`,
+        [nextStatus, nextShipping, nextTotal, nextNotes, req.params.id]
+      );
+
+      await client.query(
+        `UPDATE payments
+         SET amount = $1,
+             status = CASE
+               WHEN $2 = $3 THEN $4::payment_status
+               WHEN status = $4::payment_status THEN $5::payment_status
+               ELSE status
+             END,
+             updated_at = NOW()
+         WHERE order_id = $6`,
+        [nextTotal, nextStatus, ORDER_STATUSES.PAID, PAYMENT_STATUSES.SUCCEEDED, PAYMENT_STATUSES.PENDING, req.params.id]
+      );
+
+      if (currentOrder.status !== nextStatus) {
+        await client.query(
+          `INSERT INTO order_status_history (order_id, from_status, to_status, changed_by, notes)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [req.params.id, currentOrder.status, nextStatus, req.user.sub, req.body.notes ?? 'Actualizado desde panel admin']
+        );
+      }
+
+      return {
+        ...result.rows[0],
+        previous_status: currentOrder.status,
+      };
     });
 
     return res.status(200).json({ data: updated });
@@ -291,7 +411,7 @@ router.patch('/:id/status', authenticateToken, requireRole(USER_ROLES.ADMIN, USE
 /**
  * GET /api/orders/:id
  * Obtiene detalle de una orden específica
- * - Admin/Editor/Collaborator: acceso a cualquier orden
+ * - Admin/gerente/colaborador: acceso a cualquier orden
  * - Customer: solo acceso a órdenes propias
  * Usa middleware requireOwnershipOrder para validación
  */
@@ -299,7 +419,7 @@ router.get('/:id', authenticateToken, requireOwnershipOrder(pool), async (req, r
   try {
     const result = await pool.query(
       `SELECT 
-         o.id, o.order_code, o.status, o.total_amount, o.subtotal_amount, o.shipping_amount,
+        o.id, o.order_code, o.customer_id, o.status, o.total_amount, o.subtotal_amount, o.shipping_amount,
          o.created_at, o.updated_at, o.notes,
          c.full_name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
          COALESCE(json_agg(
@@ -336,7 +456,7 @@ router.get('/:id', authenticateToken, requireOwnershipOrder(pool), async (req, r
 /**
  * GET /api/orders/:id/history
  * Obtiene el historial de cambios de estado de una orden
- * - Admin/Editor/Collaborator: acceso a cualquier orden
+ * - Admin/gerente/colaborador: acceso a cualquier orden
  * - Customer: solo acceso a órdenes propias
  * Usa middleware requireOwnershipOrder para validación
  */

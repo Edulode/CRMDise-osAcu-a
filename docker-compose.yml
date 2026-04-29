@@ -1,12 +1,19 @@
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: ${DOCKER_LOG_MAX_SIZE:-10m}
+    max-file: ${DOCKER_LOG_MAX_FILE:-5}
+
 services:
   db:
     image: postgres:16-alpine
     container_name: disenos_acuna_db
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_DB: crm_disacuna
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     ports:
       - "5432:5432"
     volumes:
@@ -23,6 +30,7 @@ services:
       context: ./backend
     container_name: disenos_acuna_backend
     restart: unless-stopped
+    logging: *default-logging
     command: sh -c "npm run db:init && npm start"
     depends_on:
       db:
@@ -34,14 +42,14 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: postgres
-      DB_PASSWORD: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       DB_NAME: crm_disacuna
-      JWT_SECRET: change-me-in-production
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRES_IN: 7d
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
-      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:?SENDGRID_API_KEY is required}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:?SENDGRID_FROM_EMAIL is required}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
@@ -55,10 +63,139 @@ services:
         STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
     container_name: disenos_acuna_frontend
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       - backend
     ports:
       - "8080:80"
 
+  backup:
+    image: postgres:16-alpine
+    container_name: disenos_acuna_backup
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      PGUSER: postgres
+      PGDATABASE: crm_disacuna
+      PGHOST: db
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - postgres_backups:/backups
+    command: >
+      sh -c "mkdir -p /backups &&
+      while true; do
+        ts=$$(date +%Y%m%d-%H%M%S);
+        pg_dump -h $$PGHOST -U $$PGUSER -d $$PGDATABASE | gzip > /backups/backup-$$ts.sql.gz;
+        find /backups -type f -name 'backup-*.sql.gz' -mtime +$$BACKUP_RETENTION_DAYS -delete;
+        sleep $$BACKUP_INTERVAL_SECONDS;
+      done"
+
+  monitor:
+    build:
+      context: ./backend
+    container_name: disenos_acuna_monitor
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      MONITOR_API_BASE: http://backend:4000
+      MONITOR_INTERVAL_MS: 60000
+      MONITOR_ALERT_COOLDOWN_MS: 300000
+      MONITOR_DB_LATENCY_MS_THRESHOLD: 500
+      MONITOR_ALERT_EMAIL_TO: ${MONITOR_ALERT_EMAIL_TO:-}
+      MONITOR_ALERT_WEBHOOK_URL: ${MONITOR_ALERT_WEBHOOK_URL:-}
+      MONITOR_ALERT_LISTEN_PORT: 8080
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:?SENDGRID_API_KEY is required}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:?SENDGRID_FROM_EMAIL is required}
+    command: sh -c "npm run monitor:health"
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: disenos_acuna_prometheus
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      backend:
+        condition: service_started
+      alertmanager:
+        condition: service_started
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.route-prefix=/prometheus
+      - --web.external-url=/prometheus
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: disenos_acuna_alertmanager
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      monitor:
+        condition: service_started
+    volumes:
+      - ./observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.route-prefix=/alertmanager
+      - --web.external-url=http://localhost:8088/alertmanager
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: disenos_acuna_grafana
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:%(http_port)s/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "false"
+    volumes:
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana_data:/var/lib/grafana
+
+  observability-proxy:
+    build:
+      context: ./observability/proxy
+    container_name: disenos_acuna_observability_proxy
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      grafana:
+        condition: service_started
+      prometheus:
+        condition: service_started
+      alertmanager:
+        condition: service_started
+    environment:
+      OBSERVABILITY_BASIC_AUTH_USER: ${OBSERVABILITY_BASIC_AUTH_USER:-admin}
+      OBSERVABILITY_BASIC_AUTH_PASSWORD: ${OBSERVABILITY_BASIC_AUTH_PASSWORD:?OBSERVABILITY_BASIC_AUTH_PASSWORD is required}
+    ports:
+      - "${OBSERVABILITY_BIND_HOST:-127.0.0.1}:8088:8088"
+
 volumes:
   postgres_data:
+  postgres_backups:
+  prometheus_data:
+  alertmanager_data:
+  grafana_data:

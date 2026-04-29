@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pedidos | Diseños Acuña</title>
   <script src="../src/js/auth.js" defer></script>
+  <script src="../src/js/confirm-dialog.js" defer></script>
   <script defer>
     window.addEventListener('DOMContentLoaded', () => {
-      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+      if (!AUTH.isAuthenticated() || !['admin', 'gerente', 'colaborador'].includes(AUTH.getUser()?.role)) {
         window.location.href = './login.html';
       }
     });
@@ -29,6 +30,7 @@
       margin: 0;
       font-family: 'DM Sans', sans-serif;
       background: #f3f4f6;
+              ${o.status !== 'completed' && o.status !== 'canceled' ? `<button class="btn btn-success" type="button" onclick="completeOrder('${o.id}')">Completar</button>` : ''}
       color: var(--text);
     }
 
@@ -66,6 +68,8 @@
 
     .btn:hover { border-color: var(--gold); }
     .btn-danger { border-color: #fecaca; color: var(--danger); }
+    .btn-success { border-color: #bbf7d0; color: #15803d; background: #f0fdf4; }
+    .btn-success:hover { border-color: #86efac; background: #dcfce7; }
 
     .kpi-grid {
       display: grid;
@@ -185,12 +189,60 @@
       background: #fff;
     }
 
+    .stock-hint {
+      margin-top: 6px;
+      min-height: 1.1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .stock-hint.low {
+      color: #b45309;
+      font-weight: 700;
+    }
+
+    .stock-hint.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
     .empty {
       padding: 22px;
       color: var(--muted);
       font-size: 0.9rem;
       text-align: center;
     }
+
+    #orderModalOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.42);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 70;
+      padding: 12px;
+    }
+
+    #orderModalOverlay.open { display: flex; }
+
+    .order-modal-box {
+      width: min(640px, 100%);
+      max-height: 88vh;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .order-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .order-form-grid .full { grid-column: 1 / -1; }
 
     #detailOverlay {
       position: fixed;
@@ -303,7 +355,10 @@
   <main class="page-shell">
     <div class="toolbar">
       <h1>Pedidos</h1>
-      <button id="refreshBtn" type="button" class="btn">Actualizar</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="createOrderBtn" type="button" class="btn">Nuevo pedido</button>
+        <button id="refreshBtn" type="button" class="btn">Actualizar</button>
+      </div>
     </div>
 
     <section class="kpi-grid">
@@ -353,6 +408,53 @@
     </section>
   </main>
 
+  <div id="orderModalOverlay" aria-hidden="true">
+    <div class="order-modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;">
+        <h3 id="orderModalTitle" style="margin:0;font-size:1.05rem;font-weight:800;color:#1f2f4a;">Nuevo pedido</h3>
+        <button id="closeOrderModalBtn" class="btn" type="button">Cerrar</button>
+      </div>
+      <form id="orderForm" class="order-form-grid">
+        <div>
+          <label for="orderCustomer" style="display:block;font-size:0.82rem;color:#475569;margin-bottom:4px;">Cliente</label>
+          <select id="orderCustomer" class="select" required></select>
+        </div>
+        <div>
+          <label for="orderDesign" style="display:block;font-size:0.82rem;color:#475569;margin-bottom:4px;">Diseño</label>
+          <select id="orderDesign" class="select" required></select>
+          <div id="orderStockHint" class="stock-hint">Selecciona un diseño para ver el stock disponible.</div>
+        </div>
+        <div>
+          <label for="orderQuantity" style="display:block;font-size:0.82rem;color:#475569;margin-bottom:4px;">Cantidad</label>
+          <input id="orderQuantity" class="input" type="number" min="1" step="1" value="1" required />
+        </div>
+        <div>
+          <label for="orderShipping" style="display:block;font-size:0.82rem;color:#475569;margin-bottom:4px;">Envío</label>
+          <input id="orderShipping" class="input" type="number" min="0" step="0.01" value="0" required />
+        </div>
+        <div>
+          <label for="orderStatus" style="display:block;font-size:0.82rem;color:#475569;margin-bottom:4px;">Estado</label>
+          <select id="orderStatus" class="select">
+            <option value="pending">Pendiente</option>
+            <option value="paid">Pagado</option>
+            <option value="in_production">En producción</option>
+            <option value="shipped">Enviado</option>
+            <option value="completed">Completado</option>
+            <option value="canceled">Cancelado</option>
+          </select>
+        </div>
+        <div class="full">
+          <label for="orderNotes" style="display:block;font-size:0.82rem;color:#475569;margin-bottom:4px;">Notas</label>
+          <textarea id="orderNotes" class="input" rows="3" placeholder="Notas internas del pedido"></textarea>
+        </div>
+        <div class="full" style="display:flex;justify-content:flex-end;gap:8px;">
+          <button type="button" class="btn" id="cancelOrderFormBtn">Cancelar</button>
+          <button type="submit" class="btn">Guardar pedido</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="detailOverlay" aria-hidden="true">
     <div class="detail-box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;">
@@ -370,7 +472,7 @@
   <div id="toast" role="alert" aria-live="polite"></div>
 
   <script>
-    const API_BASE = 'http://localhost:4000/api';
+    const API_BASE = '/api';
     const STATUS_LABEL = {
       pending: 'Pendiente',
       paid: 'Pagado',
@@ -381,6 +483,11 @@
     };
 
     let orders = [];
+    let customers = [];
+    let designs = [];
+    let designsById = new Map();
+    let orderFormMode = 'create';
+    let editingOrderId = null;
     let toastTimer;
 
     function showToast(message, type = 'success') {
@@ -396,7 +503,7 @@
     }
 
     function ensureAdmin() {
-      if (!AUTH.isAuthenticated() || AUTH.getUser()?.role !== 'admin') {
+      if (!AUTH.isAuthenticated() || !['admin', 'gerente', 'colaborador'].includes(AUTH.getUser()?.role)) {
         window.location.href = './login.html';
         return false;
       }
@@ -431,6 +538,81 @@
       orders = result.data || [];
       renderKpis();
       renderTable();
+    }
+
+    async function loadReferenceData() {
+      const [customersResult, designsResult] = await Promise.allSettled([
+        fetchJson('/customers'),
+        fetchJson('/catalog/designs?limit=100'),
+      ]);
+
+      if (customersResult.status === 'fulfilled') {
+        customers = customersResult.value.data || [];
+      }
+
+      if (designsResult.status === 'fulfilled') {
+        designs = designsResult.value.data || [];
+      }
+
+      designsById = new Map(designs.map((design) => [design.id, design]));
+      hydrateOrderFormSelects();
+      updateStockHint();
+
+      if (customersResult.status === 'rejected' && designsResult.status === 'rejected') {
+        throw new Error('No se pudieron cargar clientes ni diseños');
+      }
+    }
+
+    function hydrateOrderFormSelects() {
+      const customerSelect = document.getElementById('orderCustomer');
+      const designSelect = document.getElementById('orderDesign');
+
+      customerSelect.innerHTML = customers.length
+        ? customers.map((customer) => `<option value="${customer.id}">${customer.full_name} (${customer.email})</option>`).join('')
+        : '<option value="">Sin clientes disponibles</option>';
+
+      designSelect.innerHTML = designs.length
+        ? designs.map((design) => `<option value="${design.id}">${design.name} - ${money(design.base_price)} · stock ${Number(design.stock ?? 0)}</option>`).join('')
+        : '<option value="">Sin diseños disponibles</option>';
+    }
+
+    function updateStockHint() {
+      const hint = document.getElementById('orderStockHint');
+      if (!hint) return;
+
+      const designId = document.getElementById('orderDesign').value;
+      const quantity = Number(document.getElementById('orderQuantity').value || 0);
+      const selected = designsById.get(designId);
+
+      if (!selected) {
+        hint.className = 'stock-hint';
+        hint.textContent = 'Selecciona un diseño para ver el stock disponible.';
+        return;
+      }
+
+      const available = Number(selected.stock ?? 0);
+      const reserved = Number(selected.reserved ?? 0);
+
+      if (available <= 0) {
+        hint.className = 'stock-hint error';
+        hint.textContent = `Sin stock disponible para ${selected.name}.`;
+        return;
+      }
+
+      if (quantity > available) {
+        hint.className = 'stock-hint error';
+        hint.textContent = `Solo hay ${available} unidades disponibles para ${selected.name}.`;
+        return;
+      }
+
+      if (available <= 3) {
+        hint.className = 'stock-hint low';
+        hint.textContent = `Alerta: quedan ${available} unidades disponibles para ${selected.name}.`;
+        return;
+      }
+
+      hint.className = 'stock-hint';
+      hint.textContent = `Disponible: ${available} unidades · Reservadas: ${reserved}`;
     }
 
     function renderKpis() {
@@ -496,6 +678,8 @@
             <td><strong>${money(o.total_amount)}</strong></td>
             <td>${created}</td>
             <td>
+              <button class="btn" type="button" onclick="openOrderModalEdit('${o.id}')">Editar</button>
+              ${o.status !== 'completed' && o.status !== 'canceled' ? `<button class="btn btn-success" type="button" onclick="completeOrder('${o.id}')">Completar</button>` : ''}
               <button class="btn btn-danger" type="button" onclick="cancelOrder('${o.id}')">Cancelar</button>
             </td>
           </tr>
@@ -517,12 +701,154 @@
       }
     }
 
+    async function completeOrder(orderId) {
+      try {
+        await fetchJson(`/orders/${orderId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'completed', notes: 'Marcado como completado desde panel admin' }),
+        });
+        await loadOrders();
+        showToast('Pedido marcado como completado.');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
     async function cancelOrder(orderId) {
-      if (!confirm('¿Cancelar este pedido?')) return;
+      const confirmed = await APP_CONFIRM_DANGER({
+        title: 'Cancelar pedido',
+        message: 'Vas a cancelar este pedido y su estado cambiará a cancelado.',
+        details: 'Esta acción quedará registrada en el historial del pedido.',
+        confirmText: 'Cancelar pedido',
+      });
+      if (!confirmed) return;
       try {
         await fetchJson(`/orders/${orderId}`, { method: 'DELETE' });
         await loadOrders();
         showToast('Pedido cancelado correctamente.');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    function closeOrderModal() {
+      document.getElementById('orderModalOverlay').classList.remove('open');
+      editingOrderId = null;
+      orderFormMode = 'create';
+      document.getElementById('orderForm').reset();
+      document.getElementById('orderCustomer').disabled = false;
+      document.getElementById('orderDesign').disabled = false;
+      document.getElementById('orderQuantity').disabled = false;
+      document.getElementById('orderStatus').value = 'pending';
+      updateStockHint();
+    }
+
+    function openOrderModalCreate() {
+      orderFormMode = 'create';
+      editingOrderId = null;
+      document.getElementById('orderModalTitle').textContent = 'Nuevo pedido';
+      document.getElementById('orderCustomer').disabled = false;
+      document.getElementById('orderDesign').disabled = false;
+      document.getElementById('orderQuantity').disabled = false;
+      document.getElementById('orderStatus').value = 'pending';
+      updateStockHint();
+      document.getElementById('orderModalOverlay').classList.add('open');
+    }
+
+    async function openOrderModalEdit(orderId) {
+      try {
+        const detail = await fetchJson(`/orders/${orderId}`);
+        const order = detail.data;
+        const firstItem = (order.items || [])[0] || {};
+
+        orderFormMode = 'edit';
+        editingOrderId = orderId;
+        document.getElementById('orderModalTitle').textContent = `Editar pedido ${order.order_code}`;
+        document.getElementById('orderCustomer').value = order.customer_id || '';
+        document.getElementById('orderDesign').value = firstItem.design_id || '';
+        document.getElementById('orderQuantity').value = firstItem.quantity || 1;
+        document.getElementById('orderShipping').value = Number(order.shipping_amount || 0);
+        document.getElementById('orderStatus').value = order.status || 'pending';
+        document.getElementById('orderNotes').value = order.notes || '';
+
+        document.getElementById('orderCustomer').disabled = true;
+        document.getElementById('orderDesign').disabled = true;
+        document.getElementById('orderQuantity').disabled = true;
+        updateStockHint();
+
+        document.getElementById('orderModalOverlay').classList.add('open');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function saveOrderFromModal(event) {
+      event.preventDefault();
+
+      const customerId = document.getElementById('orderCustomer').value;
+      const designId = document.getElementById('orderDesign').value;
+      const quantity = Number(document.getElementById('orderQuantity').value || 0);
+      const shippingAmount = Number(document.getElementById('orderShipping').value || 0);
+      const status = document.getElementById('orderStatus').value;
+      const notes = document.getElementById('orderNotes').value.trim();
+      const selectedDesign = designsById.get(designId);
+      const availableStock = Number(selectedDesign?.stock ?? 0);
+
+      if (orderFormMode === 'create' && (!customerId || !designId || quantity <= 0)) {
+        showToast('Completa cliente, diseño y cantidad.', 'error');
+        return;
+      }
+
+      if (orderFormMode === 'create' && selectedDesign && quantity > availableStock) {
+        showToast(`Solo hay ${availableStock} unidades disponibles para ${selectedDesign.name}.`, 'error');
+        updateStockHint();
+        return;
+      }
+
+      try {
+        if (orderFormMode === 'create') {
+          const created = await fetchJson('/orders/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerId,
+              items: [{
+                designId,
+                quantity,
+                personalizationData: {},
+              }],
+              shippingPrice: shippingAmount,
+              notes: notes || undefined,
+            }),
+          });
+
+          if (status !== 'pending' && created?.data?.id) {
+            await fetchJson(`/orders/${created.data.id}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                status,
+                notes: notes || 'Actualizado desde panel admin',
+              }),
+            });
+          }
+        } else {
+          await fetchJson(`/orders/${editingOrderId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              shippingAmount,
+              status,
+              notes: notes || null,
+            }),
+          });
+        }
+
+        const successMode = orderFormMode;
+        closeOrderModal();
+        await loadOrders();
+        showToast(successMode === 'create' ? 'Pedido creado correctamente.' : 'Pedido actualizado correctamente.');
       } catch (error) {
         showToast(error.message, 'error');
       }
@@ -579,11 +905,23 @@
     }
 
     window.changeStatus = changeStatus;
+    window.completeOrder = completeOrder;
     window.cancelOrder = cancelOrder;
     window.openDetail = openDetail;
+    window.openOrderModalEdit = openOrderModalEdit;
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (!ensureAdmin()) return;
+
+      document.getElementById('createOrderBtn').addEventListener('click', openOrderModalCreate);
+      document.getElementById('closeOrderModalBtn').addEventListener('click', closeOrderModal);
+      document.getElementById('cancelOrderFormBtn').addEventListener('click', closeOrderModal);
+      document.getElementById('orderForm').addEventListener('submit', saveOrderFromModal);
+      document.getElementById('orderModalOverlay').addEventListener('click', (e) => {
+        if (e.target.id === 'orderModalOverlay') {
+          closeOrderModal();
+        }
+      });
 
       document.getElementById('refreshBtn').addEventListener('click', async () => {
         try {
@@ -601,8 +939,11 @@
       document.getElementById('detailOverlay').addEventListener('click', (e) => {
         if (e.target.id === 'detailOverlay') closeDetail();
       });
+      document.getElementById('orderDesign').addEventListener('change', updateStockHint);
+      document.getElementById('orderQuantity').addEventListener('input', updateStockHint);
 
       try {
+        await loadReferenceData();
         await loadOrders();
       } catch (error) {
         showToast(error.message, 'error');

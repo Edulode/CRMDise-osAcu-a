@@ -272,6 +272,21 @@
       </a>`).join("");
   }
 
+  function roleLabel(role) {
+    if (role === 'admin') return 'Administrador';
+    if (role === 'gerente') return 'Gerente';
+    if (role === 'colaborador') return 'Colaborador';
+    return role || 'Usuario';
+  }
+
+  function initials(fullName) {
+    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'U';
+    const first = parts[0][0] || '';
+    const second = parts.length > 1 ? (parts[1][0] || '') : '';
+    return (first + second).toUpperCase() || 'U';
+  }
+
   // ── 5. HTML del layout ───────────────────────────────────────────────────
   const layoutHTML = `
     <div id="da-overlay"></div>
@@ -325,6 +340,32 @@
     titleEl.textContent = found ? found.label : document.title || "";
   }
 
+  // ── 7.1 Header de usuario dinámico ──────────────────────────────────────
+  const authApi = typeof AUTH !== 'undefined'
+    ? AUTH
+    : (typeof globalThis.AUTH !== 'undefined' ? globalThis.AUTH : null);
+  const currentUser = authApi && typeof authApi.getUser === 'function' ? authApi.getUser() : null;
+
+  const userNameEl = document.querySelector('.da-header-user-name');
+  const userEmailEl = document.querySelector('.da-header-user-email');
+  const avatarEl = document.querySelector('.da-avatar');
+
+  if (userNameEl) {
+    const fullName = currentUser?.full_name || currentUser?.name || 'Usuario';
+    userNameEl.textContent = fullName;
+  }
+
+  if (userEmailEl) {
+    const email = currentUser?.email || '';
+    const roleText = roleLabel(currentUser?.role);
+    userEmailEl.textContent = email ? `${email} · ${roleText}` : roleText;
+  }
+
+  if (avatarEl) {
+    const fullName = currentUser?.full_name || currentUser?.name || 'Usuario';
+    avatarEl.textContent = initials(fullName);
+  }
+
   // ── 8. Toggle sidebar (móvil) ────────────────────────────────────────────
   window.daToggleSidebar = function () {
     const sidebar = document.getElementById("da-sidebar");
@@ -342,9 +383,15 @@
   if (logoutLink) {
     logoutLink.addEventListener('click', (event) => {
       event.preventDefault();
-      if (typeof window.AUTH?.logout === 'function') {
-        window.AUTH.logout();
+      const runtimeAuthApi = typeof AUTH !== 'undefined'
+        ? AUTH
+        : (typeof globalThis.AUTH !== 'undefined' ? globalThis.AUTH : null);
+
+      if (runtimeAuthApi && typeof runtimeAuthApi.logout === 'function') {
+        runtimeAuthApi.logout();
+        return;
       }
+
       window.location.href = './login.html';
     });
   }

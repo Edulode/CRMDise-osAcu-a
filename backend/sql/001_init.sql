@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 DO $$ BEGIN
-  CREATE TYPE user_role AS ENUM ('admin', 'editor', 'collaborator', 'customer');
+  CREATE TYPE user_role AS ENUM ('admin', 'gerente', 'colaborador', 'customer');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
@@ -42,6 +42,48 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT users_customer_id_fk FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS auth_refresh_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  jti UUID NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked_at TIMESTAMPTZ,
+  revocation_reason TEXT,
+  user_agent TEXT,
+  ip_address VARCHAR(64),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS auth_token_revocations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  jti UUID NOT NULL UNIQUE,
+  token_type VARCHAR(20) NOT NULL DEFAULT 'access',
+  expires_at TIMESTAMPTZ NOT NULL,
+  reason TEXT,
+  revoked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS user_mfa (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  secret TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  verified_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS security_audit_logs (
@@ -159,6 +201,10 @@ CREATE INDEX IF NOT EXISTS idx_order_history_order ON order_status_history(order
 CREATE INDEX IF NOT EXISTS idx_payments_order ON payments(order_id);
 CREATE INDEX IF NOT EXISTS idx_security_audit_user_created ON security_audit_logs(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_security_audit_email_created ON security_audit_logs(email, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON auth_refresh_tokens(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON auth_refresh_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS idx_token_revocations_expires ON auth_token_revocations(expires_at);
+CREATE INDEX IF NOT EXISTS idx_password_reset_expires ON password_reset_tokens(expires_at);
 
 INSERT INTO categories (name, slug, description)
 VALUES

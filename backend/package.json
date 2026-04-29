@@ -6,10 +6,16 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "test": "node --test",
+    "monitor:health": "node scripts/monitor-health.js",
     "db:prepare": "node scripts/prepare-db.js",
-    "db:init": "node scripts/init-db.js",
+    "db:init": "node scripts/init-db.js && npm run db:migrate:roles && npm run db:seed:staff",
+    "db:migrate:roles": "node scripts/migrate-user-roles.js",
     "db:check": "node scripts/check-db.js",
-    "db:seed": "node scripts/seed-db.js"
+    "db:seed": "node scripts/seed-db.js",
+    "db:seed:staff": "node scripts/create-staff-users.js",
+    "db:cleanup:customers": "node scripts/cleanup-customers.js",
+    "demo:setup": "npm run db:init ; npm run db:seed ; node scripts/create-demo-users.js",
+    "demo:smoke": "node scripts/demo-smoke.js"
   },
   "keywords": [],
   "author": "",

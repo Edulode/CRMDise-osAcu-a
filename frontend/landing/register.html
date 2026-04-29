@@ -400,7 +400,7 @@
     // Si ya está autenticado, redirigir
     if (AUTH.isAuthenticated()) {
       const user = AUTH.getUser();
-      if (user?.role === 'admin' || user?.role === 'employee') {
+      if (user?.role === 'admin' || user?.role === 'gerente' || user?.role === 'colaborador') {
         window.location.href = '../panelAdmin/index.html';
       } else {
         window.location.href = './index.html';

@@ -328,9 +328,16 @@
           </label>
         </div>
 
+        <div class="field field-inline">
+          <label class="checkbox-label" for="rememberMe">
+            <input id="rememberMe" type="checkbox">
+            Recordar correo
+          </label>
+        </div>
+
         <!-- Forgot password link -->
         <div class="forgot-password">
-          <a href="#" onclick="alert('Función de recuperación próximamente'); return false;">¿Olvidaste tu contraseña?</a>
+          <a href="./forgot-password.html">¿Olvidaste tu contraseña?</a>
         </div>
 
         <!-- Buttons -->
@@ -361,6 +368,15 @@
     // Si ya está autenticado, redirigir
     if (AUTH.isAuthenticated()) {
       window.location.href = redirectTarget ? `./${redirectTarget}` : './index.html';
+    }
+
+    const rememberedEmail = localStorage.getItem('da_last_email');
+    if (rememberedEmail) {
+      document.getElementById('email').value = rememberedEmail;
+      const rememberCheckbox = document.getElementById('rememberMe');
+      if (rememberCheckbox) {
+        rememberCheckbox.checked = true;
+      }
     }
 
     function setFieldError(fieldId, message) {
@@ -442,7 +458,7 @@
         // Llamar a AUTH.login()
         await AUTH.login(email, password);
 
-        const remember = document.getElementById('rememberMe').checked;
+        const remember = document.getElementById('rememberMe')?.checked ?? false;
         if (remember) {
           localStorage.setItem('da_last_email', email);
         } else {
@@ -474,11 +490,11 @@
       document.getElementById('password').type = e.target.checked ? 'text' : 'password';
     });
 
-    const rememberedEmail = localStorage.getItem('da_last_email');
-    if (rememberedEmail) {
-      document.getElementById('email').value = rememberedEmail;
-      document.getElementById('rememberMe').checked = true;
-    }
+    document.getElementById('rememberMe').addEventListener('change', function () {
+      if (!this.checked) {
+        localStorage.removeItem('da_last_email');
+      }
+    });
   </script>
 
 </body>
