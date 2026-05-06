@@ -9,6 +9,8 @@ let server;
 let baseUrl;
 const createdEmails = [];
 let createdOrderCode = null;
+let createdDesignId = null;
+let createdCategoryId = null;
 
 async function requestJson(path, options = {}) {
   const { headers: optionHeaders, ...requestOptions } = options;
@@ -49,13 +51,64 @@ async function getCustomerIdByEmail(email) {
 
 async function getAnyActiveDesignId() {
   const result = await pool.query('SELECT id FROM designs WHERE active = true ORDER BY created_at DESC LIMIT 1');
-  assert.equal(result.rowCount, 1);
-  return result.rows[0].id;
+  if (result.rowCount > 0) {
+    return result.rows[0].id;
+  }
+
+  const categoryResult = await pool.query('SELECT id FROM categories ORDER BY created_at DESC LIMIT 1');
+  if (categoryResult.rowCount > 0) {
+    createdCategoryId = categoryResult.rows[0].id;
+  } else {
+    const newCategory = await pool.query(
+      `INSERT INTO categories (name, slug, description, active)
+       VALUES ($1, $2, $3, true)
+       RETURNING id`,
+      ['QA', `qa-${randomUUID().slice(0, 8)}`, 'Categoria temporal para pruebas automatizadas']
+    );
+    createdCategoryId = newCategory.rows[0].id;
+  }
+
+  const slug = `qa-design-${randomUUID().slice(0, 12)}`;
+  const designResult = await pool.query(
+    `INSERT INTO designs (
+       category_id, name, slug, description, base_price, personalization_price,
+       image_url, preview_url, tags, featured, active
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::text[], $10, true)
+     RETURNING id`,
+    [
+      createdCategoryId,
+      'Diseno QA',
+      slug,
+      'Diseno temporal creado para pruebas automatizadas',
+      50,
+      10,
+      null,
+      null,
+      ['qa', 'test'],
+      false,
+    ]
+  );
+
+  createdDesignId = designResult.rows[0].id;
+  await pool.query('INSERT INTO inventory (design_id, stock, reserved) VALUES ($1, $2, 0)', [createdDesignId, 25]);
+  return createdDesignId;
 }
 
 async function cleanup() {
   if (createdOrderCode) {
     await pool.query('DELETE FROM orders WHERE order_code = $1', [createdOrderCode]);
+  }
+
+  if (createdDesignId) {
+    await pool.query('DELETE FROM designs WHERE id = $1', [createdDesignId]);
+  }
+
+  if (createdCategoryId) {
+    const stillUsed = await pool.query('SELECT 1 FROM designs WHERE category_id = $1 LIMIT 1', [createdCategoryId]);
+    if (stillUsed.rowCount === 0) {
+      await pool.query('DELETE FROM categories WHERE id = $1', [createdCategoryId]);
+    }
   }
 
   if (createdEmails.length > 0) {
